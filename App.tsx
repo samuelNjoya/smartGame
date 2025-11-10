@@ -1,20 +1,21 @@
+// App.tsx
+import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { SettingsProvider } from './src/contexts/SettingsContext';
+import { PlayerProvider } from './src/contexts/PlayerContext';
+import AppNavigator from './src/navigation/AppNavigator';
+import { GestureHandlerRootView } from 'react-native-gesture-handler'; // Important pour Snake
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    // GestureHandler doit être à la racine pour les gestes
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SettingsProvider>
+        <PlayerProvider>
+          {/* AppNavigator gère le changement de thème pour la barre de statut */}
+          <AppNavigator />
+        </PlayerProvider>
+      </SettingsProvider>
+    </GestureHandlerRootView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

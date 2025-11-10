@@ -1,0 +1,56 @@
+SmartGame/
+├── assets/
+│   ├── animations/ (Mettez vos fichiers Lottie .json ici)
+│   ├── fonts/
+│   └── sounds/
+├── src/
+│   ├── components/
+│   │   ├── core/         (Boutons, Textes stylisés, etc.)
+│   │   ├── game/         (Composants réutilisables pour les jeux)
+│   │   └── layout/       (Conteneurs, Modals, etc.)
+│   ├── constants/
+│   │   ├── colors.ts
+│   │   ├── config.ts     (Pour les paramètres modifiables !)
+│   │   └── theme.ts
+│   ├── contexts/
+│   │   ├── PlayerContext.tsx
+│   │   └── SettingsContext.tsx
+│   ├── games/
+│   │   ├── memory/
+│   │   │   ├── MemoryGameScreen.tsx
+│   │   │   ├── components/
+│   │   │   │   └── MemoryCard.tsx
+│   │   │   └── memory.logic.ts
+│   │   ├── quiz/
+│   │   │   ├── QuizGameScreen.tsx
+│   │   │   ├── components/
+│   │   │   └── quiz.data.ts
+│   │   └── snake/
+│   │       ├── SnakeGameScreen.tsx
+│   │       ├── components/
+│   │       └── snake.logic.ts
+│   │   ├── (Autres jeux : SudokuScreen.tsx, TicTacToeScreen.tsx...)
+│   ├── hooks/
+│   │   ├── useAsyncStorage.ts
+│   │   ├── usePlayer.ts
+│   │   └── useSettings.ts
+│   ├── navigation/
+│   │   ├── AppNavigator.tsx
+│   │   ├── GameStack.tsx
+│   │   ├── MainTabs.tsx
+│   │   └── types.ts        (Types pour la navigation)
+│   ├── screens/
+│   │   ├── DailyChallengeScreen.tsx
+│   │   ├── GameListScreen.tsx
+│   │   ├── HomeScreen.tsx
+│   │   ├── LeaderboardScreen.tsx
+│   │   └── ProfileScreen.tsx
+│   ├── services/
+│   │   └── StorageService.ts
+│   ├── utils/
+│   │   ├── helpers.ts
+│   │   └── __tests__/
+│   │       └── helpers.test.ts
+├── App.tsx
+├── jest.config.js
+└── ... (autres fichiers de config: package.json, etc.)

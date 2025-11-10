@@ -1,0 +1,41 @@
+Liste de jeux à implémenter (chaque ligne = module indépendant) :
+
+Snake (niveau : vitesse de déplacement, longueur des bonus)
+
+Memory Game (cartes emoji, nombre de paires par niveau)
+
+Quiz Challenge (QCM, catégories, pool de questions locales JSON)
+
+Sudoku (génération de grille, validation)
+
+2048 (mouvements par glissement)
+
+Sliding Puzzle (4x4 / 3x3 selon niveau)
+
+Tic Tac Toe (IA simple / moyenne / impossible)
+
+Speed Tapper (taper cible mouvante, score par temps)
+
+Tap the Color (identifier couleur correcte rapidement)
+
+Avoid the Blocks (jeux d’évitement vertical/horizontal)
+
+Bubble Popper (pop bulles avant qu’elles n’atteignent le haut)
+
+Click Mania (clics en 10s + leaderboard local)
+
+Lucky Spin (roue de la fortune = animation + résultat aléatoire)
+
+Capital Quiz (questions offline sur capitales)
+
+Flag Master (associer drapeau/pays)
+
+Math Rush (opérations chronométrées)
+
+Dice Roller (mini-jeu aléatoire avec points)
+
+Word Scramble (reformer mot, timer)
+
+Devine le Mot (indices, lettres révélées)
+
+Flappy Ball (version simplifiée Flappy Bird)

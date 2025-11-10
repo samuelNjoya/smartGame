@@ -1,0 +1,21 @@
+Crée une application mobile en React Native avec Expo (TypeScript) appelée Smart Game, qui regroupe 20 mini-jeux de réflexion, de réflexe, de casse-tête, de détente et de culture (ex. Snake, Memory, Quiz, Sudoku, 2048, Tic Tac Toe, etc.), avec pour certains jeux la possibilité de jouer contre la machine (IA). Chaque jeu dispose de 3 niveaux de difficulté (Facile, Moyen, Difficile), d’une interface fluide et animée utilisant Moti et Lottie, et d’une expérience riche en icônes grâce à MaterialCommunityIcons. L’application utilise AsyncStorage pour la persistance locale (scores, paramètres, progression) et fonctionne entièrement hors ligne. L’architecture du projet sera claire : /src/screens, /src/games, /src/components, /src/contexts, /src/services, /src/navigation, /src/hooks, /src/utils, avec des composants réutilisables et bien commentés. Le design doit être moderne, coloré, ergonomique et immersif, intégrant beaucoup d’animations, sons interactifs (activables/désactivables dans les paramètres), et visualisations de scores via des graphiques dynamiques (ex. courbes de progression).
+La navigation sera gérée par React Navigation avec une structure claire :
+
+navigation/AppNavigator.tsx (gestion globale du Stack)
+
+navigation/MainTabs.tsx (barre de navigation inférieure — Bottom Tabs)
+
+navigation/GameStack.tsx (pile spécifique aux jeux).
+La barre d’onglets (icônes MaterialCommunityIcons) inclura :
+
+Accueil (home) : vue globale, actualités, Daily Challenge card, promotions et bouton “Quick Play”.
+
+Jeux (gamepad-variant) : catalogue complet des 20 mini-jeux avec filtres (type, difficulté) et recherche.
+
+Défi du jour (calendar-star) : challenge quotidien à score unique et durée limitée.
+
+Classement (trophy) : tableau des meilleurs scores locaux, avec possibilité d’export CSV.
+
+Profil (account) : paramètres, personnalisation du joueur, thème clair/sombre, gestion du son, statistiques, sauvegardes, réinitialisation des données.
+Chaque mini-jeu comprend le score en cours, le meilleur score, un bouton Rejouer, un retour fluide vers le menu, et une animation de victoire/défaite. L’application doit intégrer sons, vibrations, feedbacks visuels, graphiques de performance, et être prête à exécuter avec expo start.
+Inclure 3 jeux complets et jouables (Snake, Memory, Quiz), les squelettes des 17 autres, un README explicatif clair, et des tests unitaires (Jest) pour la logique et la persistance.

@@ -20,10 +20,14 @@ type PlayerContextType = {
   spendXP: (amount: number) => boolean;
   addLives: (amount: number) => void;
   rechargeLivesWithGame: () => void;
+  rechargeLivesWithXP: () => void; // NOUVEAU: Pour la recharge payante
   isRecharging: boolean;
 };
 
 export const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
+
+// COÛT DÉDIÉ POUR LA RECHARGE COMPLÈTE EN XP
+const FULL_RECHARGE_XP_COST = 350;
 
 export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [lives, setLives] = useState(GAME_CONFIG.MAX_LIVES);
@@ -137,31 +141,66 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
     return false; // Pas assez d'XP
   };
-  
-  // Logique de recharge (simulée ici)
+
+  // NOUVEAU: Recharger les vies en dépensant de l'XP (Recharge complète pour 350 XP)
+  const rechargeLivesWithXP = () => {
+    if (lives === GAME_CONFIG.MAX_LIVES) {
+      Alert.alert("Recharge impossible", "Vos cœurs sont déjà pleins !");
+      return;
+    }
+    
+    if (xp < FULL_RECHARGE_XP_COST) {
+      Alert.alert(
+        "XP insuffisant",
+        `Il vous faut ${FULL_RECHARGE_XP_COST} XP pour recharger complètement vos vies. Il vous manque ${FULL_RECHARGE_XP_COST - xp} XP.`
+      );
+      return;
+    }
+    
+    const success = spendXP(FULL_RECHARGE_XP_COST);
+    if (success) {
+      const livesToRestore = GAME_CONFIG.MAX_LIVES - lives;
+      addLives(livesToRestore); // Remplit complètement les vies
+      Alert.alert("Recharge réussie", `Vous avez rechargé ${livesToRestore} vie(s) pour ${FULL_RECHARGE_XP_COST} XP.`);
+    }
+  };
+
+  // MODIFIÉ: Logique de recharge avec Leçon/Jeu Aléatoire (ajoute +1 vie si l'utilisateur gagne)
   const rechargeLivesWithGame = () => {
+    if (lives === GAME_CONFIG.MAX_LIVES) {
+      Alert.alert("Recharge impossible", "Vos cœurs sont déjà pleins !");
+      return;
+    }
+    
     setIsRecharging(true);
+    // STIMULATION DU JEU ALÉATOIRE / LEÇON
     Alert.alert(
-      "Jeu de Recharge",
+      "Jeu de Recharge (Leçon)",
       "Un jeu aléatoire (Niveau Moyen) se lance... (Simulation)",
       [
         {
           text: "J'ai gagné !",
           onPress: () => {
-            // L'utilisateur gagne, on remplit les vies
-            addLives(GAME_CONFIG.MAX_LIVES - lives); // Ajoute la différence
+            // L'utilisateur gagne, on ajoute UNIQUEMENT une vie (+1)
+            addLives(1); 
             setIsRecharging(false);
+            Alert.alert("Félicitations !", "Vous avez gagné 1 vie supplémentaire !");
           },
         },
         {
           text: "J'ai perdu",
-          onPress: () => setIsRecharging(false), // L'utilisateur perd, rien ne se passe
+          onPress: () => {
+            setIsRecharging(false);
+            Alert.alert("Dommage", "Vous n'avez pas réussi, réessayez plus tard.");
+          },
         },
       ]
     );
-    // TODO: Naviguer vers un jeu aléatoire
+    // TODO: Naviguer vers un jeu aléatoire (à faire dans le composant qui appelle cette fonction)
     // navigation.navigate('GameStack', { screen: 'RandomGame', difficulty: 'medium' })
   };
+  
+
 
   return (
     <PlayerContext.Provider
@@ -174,6 +213,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         spendXP,
         addLives,
         rechargeLivesWithGame,
+        rechargeLivesWithXP,     // Nouveau !
         isRecharging,
       }}>
       {children}

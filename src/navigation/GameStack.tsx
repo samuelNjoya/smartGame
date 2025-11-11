@@ -9,6 +9,8 @@ import GameListScreen from '../screens/GameListScreen';
 import MemoryGameScreen from '../games/memory/MemoryGameScreen';
 import QuizGameScreen from '../games/quiz/QuizGameScreen';
 import SnakeGameScreen from '../games/snake/SnakeGameScreen';
+import DifficultySelectScreen from '../screens/DifficultySelectScreen';
+import LevelSelectScreen from '../screens/LevelSelectScreen';
 
 const Stack = createNativeStackNavigator<GameStackParamList>();
 
@@ -27,25 +29,24 @@ const GameStack = () => {
         component={GameListScreen}
         options={{ title: 'Catalogue de Jeux' }}
       />
+
+      {/* --- DÉCLARATION DES NOUVEAUX ÉCRANS --- */}
+      <Stack.Screen 
+        name="DifficultySelect" 
+        component={DifficultySelectScreen} 
+        options={{ title: 'Sélectionner la Difficulté' }}
+      />
+      <Stack.Screen 
+        name="LevelSelect" 
+        component={LevelSelectScreen} 
+        options={{ title: 'Sélectionner le Niveau' }}
+      />
       
       {/* JEUX COMPLETS */}
-      <Stack.Screen
-        name="Memory"
-        component={MemoryGameScreen}
-        options={{ title: 'Jeu de Mémoire' }}
-      />
-      <Stack.Screen
-        name="Quiz"
-        component={QuizGameScreen}
-        options={{ title: 'Quiz Culture' }}
-      />
-
+      <Stack.Screen name="Memory" component={MemoryGameScreen} options={{ title: 'Jeu de Mémoire' }} />
+      <Stack.Screen name="Quiz" component={QuizGameScreen} options={{ title: 'Quiz Culture' }} />
       {/* JEU SQUELETTE */}
-      <Stack.Screen
-        name="Snake"
-        component={SnakeGameScreen}
-        options={{ title: 'Snake' }}
-      />
+      <Stack.Screen name="Snake" component={SnakeGameScreen} options={{ title: 'Snake' }} />
       
       {/* <Stack.Screen name="Sudoku" component={SudokuScreen} />
       <Stack.Screen name="TicTacToe" component={TicTacToeScreen} /> 

@@ -20,7 +20,7 @@ const formatTime = (ms: number) => {
 
 const NoLivesModal = ({ visible, onClose }: Props) => {
   const { theme } = useSettings();
-  const { lives, regenJobs, rechargeLivesWithGame, isRecharging } = usePlayer();
+  const { lives, regenJobs, rechargeLivesWithGame,rechargeLivesWithXP, isRecharging } = usePlayer();
   const [timeLeft, setTimeLeft] = useState('00:00');
 
   useEffect(() => {
@@ -67,6 +67,17 @@ const NoLivesModal = ({ visible, onClose }: Props) => {
             disabled={!canRecharge || isRecharging}
             color={theme.primary}
           />
+
+          {/* NOUVEAU BOUTON : Recharge complète contre 350 XP */}
+          <View style={styles.buttonContainer}>
+            <Button
+              title="Recharger complètement (350 XP)"
+              onPress={rechargeLivesWithXP}
+              disabled={!canRecharge}
+              color={theme.accent} // Utilisation de la couleur accent pour différencier
+            />
+          </View>
+
           <View style={{ marginTop: 10 }}>
             <Button title="Fermer" onPress={onClose} color={theme.text} />
           </View>
@@ -77,6 +88,10 @@ const NoLivesModal = ({ visible, onClose }: Props) => {
 };
 
 const styles = StyleSheet.create({
+  buttonContainer: {
+    marginVertical: 5, // Ajoute un petit espace vertical
+    width: '100%',
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',

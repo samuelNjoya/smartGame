@@ -1,7 +1,8 @@
-// src/navigation/types.ts
+// src/navigation/types.ts (Mise à jour)
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { GameDifficulty } from '../constants/gameData'; // NOUVEL IMPORT
 
 // Types pour la barre d'onglets principale
 export type MainTabsParamList = {
@@ -12,12 +13,24 @@ export type MainTabsParamList = {
   Profile: undefined;
 };
 
-// Types pour la pile de jeux (accessible depuis l'onglet "Games")
 export type GameStackParamList = {
+  // MODIFIÉ: GameList devient l'écran de sélection du jeu
   GameList: undefined;
-  Memory: { difficulty: 'easy' | 'medium' | 'hard' };
-  Quiz: { difficulty: 'easy' | 'medium' | 'hard' };
-  Snake: { difficulty: 'easy' | 'medium' | 'hard' };
+  
+  // NOUVEL ÉCRAN : Sélection de la difficulté
+  DifficultySelect: { gameId: string; gameName: string }; 
+  
+  // NOUVEL ÉCRAN : Sélection des niveaux
+  LevelSelect: { 
+    gameId: string; 
+    gameName: string; 
+    difficulty: GameDifficulty 
+  };
+  
+  // Écran du jeu (Quiz, Memory, etc.)
+  Quiz: { difficulty: GameDifficulty; level: number };
+  Memory: { difficulty: GameDifficulty; level: number };
+  Snake: { difficulty: GameDifficulty; level: number };
   // ... autres jeux
 };
 
@@ -32,6 +45,7 @@ export type RootStackParamList = {
 // Exemple pour un écran dans la pile de jeux
 export type GameScreenProps<T extends keyof GameStackParamList> =
   NativeStackScreenProps<GameStackParamList, T>;
+
 
 // Exemple pour un écran dans les onglets principaux
 export type TabScreenProps<T extends keyof MainTabsParamList> =

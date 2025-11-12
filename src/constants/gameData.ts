@@ -33,3 +33,19 @@ export const RANDOM_XP_REWARDS = [
   { label: '+1000 XP', value: 1000 },
   { label: 'Rien 🥲', value: 0 },
 ];
+
+// NOUVELLE STRUCTURE POUR LA PROGRESSION DES PAIRES DE MEMORY
+export const MEMORY_LEVEL_PROGRESSION = {
+  // Progression: [Min_Paires, Max_Paires]
+  easy: [4, 10],   // 8 cartes à 20 cartes
+  medium: [8, 12],  // 16 cartes à 24 cartes
+  hard: [10, 15],  // 20 cartes à 30 cartes
+};
+
+// NOUVELLE STRUCTURE POUR LA LIMITE DE COUPS (CONDITION DE DÉFAITE)
+// La formule sera (Nombre de paires * Multiplicateur de difficulté)
+export const MAX_MOVES_MULTIPLIER = {
+  easy: 2.5,  // 2.5 fois le nombre de paires
+  medium: 2.0,  // 2.0 fois le nombre de paires
+  hard: 1.5,   // 1.5 fois le nombre de paires (très strict)
+};

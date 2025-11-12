@@ -5,8 +5,9 @@ import { View, Text, StyleSheet, FlatList, Alert } from 'react-native';
 import { useSettings } from '../../hooks/useSettings';
 import { usePlayer } from '../../hooks/usePlayer';
 import { GameScreenProps } from '../../navigation/types';
-import { generateDeck, MemoryCardType } from './memory.logic';
+import { generateDeck, MemoryCardType, calculateMaxMoves } from './memory.logic';
 import MemoryCard from './components/MemoryCard';
+//import { calculateMaxMoves } from './memory.logic'; // NOUVEL IMPORT
 // NOUVEAUX IMPORTS
 import GameEndModal from '../../components/modals/GameEndModal';
 import { GameId } from '../../constants/gameData';
@@ -33,6 +34,9 @@ const MemoryGameScreen = ({ route, navigation }: Props) => { // AJOUT de navigat
 
   const [isChecking, setIsChecking] = useState(false);
 
+  // NOUVEL ÉTAT : Limite de coups
+  const [maxMoves, setMaxMoves] = useState(0);
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Constante pour l'ID du jeu
@@ -43,7 +47,11 @@ const MemoryGameScreen = ({ route, navigation }: Props) => { // AJOUT de navigat
     // La vérification des vies et spendLife() est faite dans LevelSelectScreen 
     // avant l'appel à cet écran. On ne vérifie pas et on ne dépense pas ici.
 
-    setDeck(generateDeck(difficulty));
+    // Calculer la limite de coups en fonction du niveau et de la difficulté
+    const calculatedMaxMoves = calculateMaxMoves(difficulty, level);
+    setMaxMoves(calculatedMaxMoves);
+
+    setDeck(generateDeck(difficulty, level)); // PASSER LE NIVEAU ICI
     setSelected([]);
     setMoves(0);
     setHasWon(false);
@@ -101,8 +109,20 @@ const MemoryGameScreen = ({ route, navigation }: Props) => { // AJOUT de navigat
         }, 1000);
       }
       setMoves(m => m + 1);
+
+      // VÉRIFICATION DE DÉFAITE APRES AVOIR INCREMENTÉ LE MOUVEMENT
+      if (moves + 1 >= maxMoves) {
+        // On attend 1.5s pour que les dernières cartes se retournent si c'est un non-match
+        setTimeout(() => {
+          if (!deck.every(card => card.isMatched)) {
+            // DÉFAITE : Si le jeu n'est pas déjà gagné
+            setHasWon(false);
+            setIsGameOver(true);
+          }
+        }, 1500);
+      }
     }
-  }, [selected]);
+  }, [selected, maxMoves]);//maxMoves ajouté comme dependance
 
   // Vérifier la victoire (MODIFIÉ)
   useEffect(() => {
@@ -139,7 +159,13 @@ const MemoryGameScreen = ({ route, navigation }: Props) => { // AJOUT de navigat
       <Text style={[styles.title, { color: theme.text }]}>
         Memory - Niveau {level} ({difficulty})
       </Text>
-      <Text style={[styles.moves, { color: theme.text }]}>Coups: {moves}</Text>
+      {/* <Text style={[styles.moves, { color: theme.text }]}>Coups: {moves}</Text> */}
+      <Text style={[styles.moves, { color: theme.text }]}>
+        Coups: {moves} / {maxMoves} 
+        <Text style={{ color: theme.error }}>
+            {` (${maxMoves - moves} restants)`}
+        </Text>
+      </Text>
 
       {/* preparation du jeux */}
       {deck.length === 0 && (
@@ -152,8 +178,8 @@ const MemoryGameScreen = ({ route, navigation }: Props) => { // AJOUT de navigat
         data={deck}
         keyExtractor={item => item.id.toString()}
         numColumns={numColumns}
-      //  contentContainerStyle={[styles.grid, { backgroundColor: 'red' }]} //theme.card
-      //  columnWrapperStyle={{ justifyContent: 'center' }} // 👈 Centre les colonnes
+        //  contentContainerStyle={[styles.grid, { backgroundColor: 'red' }]} //theme.card
+        //  columnWrapperStyle={{ justifyContent: 'center' }} // 👈 Centre les colonnes
 
         style={{ flexGrow: 0 }} // 👈 évite que la liste prenne tout l'écran
         contentContainerStyle={styles.grid}

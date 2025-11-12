@@ -1,7 +1,7 @@
 // src/components/modals/GameEndModal.tsx
 
 import React, { useState } from 'react';
-import { View, Text, Modal, StyleSheet, TouchableOpacity, Alert } from 'react-native'; // Utilisation de TouchableOpacity au lieu de Button
+import { View, Text, Modal, StyleSheet, Button, Alert } from 'react-native';
 import { useSettings } from '../../hooks/useSettings';
 import { usePlayer } from '../../hooks/usePlayer';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -9,9 +9,8 @@ import { GameStackParamList } from '../../navigation/types';
 import ProgressionService from '../../services/ProgressionService';
 import { BASE_XP_REWARDS, GameDifficulty, GameId, MAX_LEVELS } from '../../constants/gameData';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import RandomRewardModal from './RandomRewardModal';
+import RandomRewardModal from './RandomRewardModal'; // NOUVEL IMPORT
 
-// ... (GameEndModalProps type reste inchangé)
 type GameEndModalProps = {
   visible: boolean;
   gameId: GameId;
@@ -22,22 +21,6 @@ type GameEndModalProps = {
   navigation: NativeStackNavigationProp<GameStackParamList>; 
   onClose: () => void;
 };
-
-
-// --- NOUVEAU COMPOSANT : Bouton de Navigation avec Icône ---
-const NavButton = ({ title, icon, color, onPress, disabled = false }: any) => {
-  return (
-    <TouchableOpacity
-      style={[styles.navButton, { backgroundColor: color, opacity: disabled ? 0.6 : 1 }]}
-      onPress={onPress}
-      disabled={disabled}
-    >
-      <MaterialCommunityIcons name={icon} size={20} color="#FFFFFF" />
-      <Text style={styles.navButtonText}>{title}</Text>
-    </TouchableOpacity>
-  );
-};
-// --------------------------------------------------------
 
 const GameEndModal = ({
   visible,
@@ -59,12 +42,13 @@ const GameEndModal = ({
   const isMultipleOf10 = level % 10 === 0;
   const maxLevels = MAX_LEVELS[difficulty];
 
-  // --- Logique de Récompense et Progression (inchangée) ---
+  // --- Logique de Récompense et Progression ---
   React.useEffect(() => {
     if (!visible || !isVictory) return;
-    // ... (Logique de calcul XP et déverrouillage)
+
     let baseXP = BASE_XP_REWARDS[difficulty];
     
+    // Multiples de 5 donnent un double bonus
     if (isMultipleOf5) {
       baseXP *= 2;
     }
@@ -72,17 +56,20 @@ const GameEndModal = ({
     setXpEarned(baseXP);
     addXP(baseXP);
 
+    // Vérifier et enregistrer la progression
     const checkProgression = async () => {
       const unlocked = await ProgressionService.saveLevelCompletion(gameId, difficulty, level);
       setIsNewLevelUnlocked(unlocked);
       
+      // Multiples de 10 déclenchent le modal de récompense aléatoire
       if (isMultipleOf10) {
+        // Afficher le modal aléatoire après le gain initial
         setTimeout(() => setShowRandomRewardModal(true), 500); 
       }
     };
     
     checkProgression();
-  }, [visible, isVictory, gameId, difficulty, level, isMultipleOf5, isMultipleOf10, addXP]); // ajout de addXP dans dépendances
+  }, [visible, isVictory, gameId, difficulty, level, isMultipleOf5, isMultipleOf10]);
 
   
   // --- Fonctions de Navigation ---
@@ -99,18 +86,11 @@ const GameEndModal = ({
   const handleNext = () => handleNavigation(level + 1);
   const handlePrev = () => handleNavigation(level - 1);
   
-  // NOUVELLE FONCTION : Quitter et retourner à la liste des niveaux
-  const handleQuit = () => {
-    onClose();
-    // Utiliser popToTop pour garantir de sortir de la boucle de jeu
-    // et revenir à l'écran de LevelSelect
-    navigation.popToTop(); 
-    navigation.navigate('LevelSelect', { gameId, gameName: gameId, difficulty }); 
-  };
-  
+  // On ne peut pas revenir avant le niveau 1
   const showPrevButton = level > 1; 
-  const canGoNext = isVictory && isNewLevelUnlocked && level < maxLevels;
-  const showNextButton = level < maxLevels; // On montre le bouton "Suivant" s'il existe
+  // On ne peut pas aller au-delà du dernier niveau
+  const showNextButton = level < maxLevels; 
+  
 
   return (
     <>
@@ -129,7 +109,6 @@ const GameEndModal = ({
             </Text>
 
             {/* Corps du modal (Récompenses) */}
-            {/* ... (Affichage des récompenses inchangé) */}
             {isVictory ? (
               <View style={styles.rewardBox}>
                 <Text style={[styles.rewardText, { color: theme.text }]}>
@@ -154,53 +133,39 @@ const GameEndModal = ({
 
             {/* Pied du modal (Navigation) */}
             <View style={styles.navContainer}>
-              {/* Bouton Quitter */}
-              <NavButton 
-                title="Quitter" 
-                icon="exit-to-app" 
-                onPress={handleQuit} 
-                color={theme.secondary}
-              />
-              
-              {/* Bouton Précédent */}
               {showPrevButton && (
-                <NavButton 
+                <Button 
                   title="Précédent" 
-                  icon="arrow-left-bold-circle" 
                   onPress={handlePrev} 
-                  color={theme.accent}
+                  color={theme.secondary}
                 />
               )}
-              
-              {/* Bouton Rejouer */}
-              <NavButton 
+              <Button 
                 title="Rejouer" 
-                icon="reload" 
                 onPress={handleReplay} 
                 color={theme.primary}
               />
-              
-              {/* Bouton Suivant */}
-              {showNextButton && (
-                <NavButton 
+              {showNextButton && isVictory && (
+                <Button 
                   title="Suivant" 
-                  icon="arrow-right-bold-circle" 
                   onPress={handleNext} 
                   color={theme.success}
-                  disabled={!canGoNext} // Désactivé si on n'a pas gagné le niveau actuel
+                  disabled={!isNewLevelUnlocked && level >= maxLevels}
                 />
               )}
+              {!showNextButton && <Button title="Liste des niveaux" onPress={onClose} color={theme.text} />}
             </View>
-            
+
           </View>
         </View>
       </Modal>
       
-      {/* Modal de récompense aléatoire (inchangé) */}
+      {/* Modal de récompense aléatoire (s'affiche après le premier) */}
       <RandomRewardModal
         visible={showRandomRewardModal}
         onClose={() => {
           setShowRandomRewardModal(false);
+          // Permettre de fermer le modal principal après les deux
           onClose(); 
         }}
       />
@@ -209,7 +174,6 @@ const GameEndModal = ({
 };
 
 const styles = StyleSheet.create({
-  // ... (Styles inchangés pour overlay, modal, title, rewardBox, etc.)
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.7)',
@@ -255,26 +219,9 @@ const styles = StyleSheet.create({
   },
   navContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap', // Permet de gérer le débordement
-    justifyContent: 'center',
+    justifyContent: 'space-around',
     width: '100%',
     marginTop: 20,
-  },
-  // NOUVEAUX STYLES POUR LES BOUTONS
-  navButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    margin: 4, // Espace entre les boutons
-  },
-  navButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginLeft: 5,
   },
 });
 

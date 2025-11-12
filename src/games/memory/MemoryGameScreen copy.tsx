@@ -80,15 +80,14 @@ const MemoryGameScreen = ({ route, navigation }: Props) => { // AJOUT de navigat
 
 
   // Logique de vérification des paires (inchangée)
- useEffect(() => {
-    if (selected.length === 2 && !isGameOver) { // AJOUT de !isGameOver
+  useEffect(() => {
+    if (selected.length === 2) {
       setIsChecking(true);
       const [firstIndex, secondIndex] = selected;
       const card1 = deck[firstIndex];
       const card2 = deck[secondIndex];
-      const isMatch = card1.icon === card2.icon;
 
-      if (isMatch) {
+      if (card1.icon === card2.icon) {
         setDeck(prevDeck =>
           prevDeck.map(card =>
             card.icon === card1.icon ? { ...card, isMatched: true } : card
@@ -109,52 +108,51 @@ const MemoryGameScreen = ({ route, navigation }: Props) => { // AJOUT de navigat
           setIsChecking(false);
         }, 1000);
       }
-      // On met à jour moves
-      setMoves(m => m + 1); 
-    }
-    
-    // Nettoyage: Toujours utile en cas de démontage
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [selected, isGameOver]); // isGameOver ajouté
+      setMoves(m => m + 1);
 
- // NOUVEL EFFECT : VÉRIFIE LA DÉFAITE SÉPARÉMENT
-  useEffect(() => {
-    if (isGameOver || maxMoves === 0) return; // Ne rien faire si c'est déjà fini
-
-    // La défaite est atteinte quand moves DÉPASSE maxMoves
-    if (moves > maxMoves) { 
-        // Ligne de sécurité : on vérifie qu'on n'a pas gagné par hasard
-        if (!deck.every(card => card.isMatched)) { 
-            // DÉFAITE immédiate (pas besoin de timeout car le dernier coup est terminé)
+      // VÉRIFICATION DE DÉFAITE APRES AVOIR INCREMENTÉ LE MOUVEMENT
+      if (moves + 1 >= maxMoves) {
+        // On attend 1.5s pour que les dernières cartes se retournent si c'est un non-match
+       timerRef.current = setTimeout(() => { // Stocker le timeout
+        // AJOUT DE LA CONDITION: Vérifier si le jeu est déjà gagné 
+            // AVANT de déclarer la défaite
+          if (!deck.every(card => card.isMatched)) {
+            // DÉFAITE : Si le jeu n'est pas déjà gagné
             setHasWon(false);
             setIsGameOver(true);
-            
-            // Annuler tout timer potentiel au cas où
-            if (timerRef.current) clearTimeout(timerRef.current);
-        }
-    }
-  }, [moves, maxMoves, isGameOver]); // Dépend de moves et maxMoves
-
-  
-  // VÉRIFIER LA VICTOIRE (MODIFIÉ : Annule le timer de défaite si présent)
-  useEffect(() => {
-    if (deck.length > 0 && deck.every(card => card.isMatched) && !isGameOver) {
-      // VICTOIRE !
-      if (timerRef.current) {
-        clearTimeout(timerRef.current); // ANNULE LA DÉFAITE DIFFÉRÉE
+          }
+        }, 1500);
       }
-      setHasWon(true);
-      setIsGameOver(true);
     }
-  }, [deck, isGameOver]);
+    // Fonction de nettoyage: ANNULE LE TIMEOUT si le composant est démonté
+  // ou si cet effet est relancé (ce qui est le cas après le setState dans la victoire)
+  return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+  };
+  }, [selected, maxMoves]);//maxMoves ajouté comme dependance
+
+  // Vérifier la victoire (MODIFIÉ)
+  useEffect(() => {
+    if (deck.length > 0 && deck.every(card => card.isMatched)) {
+      // VICTOIRE !
+    if (timerRef.current) {
+        clearTimeout(timerRef.current); // <--- LIGNE CLÉ : ANNULE LA DÉFAITE DIFFÉRÉE
+    }
+      setHasWon(true);
+      // Au lieu d'une alerte et de l'ajout d'XP, on affiche le modal
+      setIsGameOver(true);
+      // L'ajout d'XP et le déverrouillage sont gérés par GameEndModal
+    }
+
+    // TODO: Ajouter une logique de défaite si le temps est écoulé ou si les coups max sont dépassés
+    // Dans Memory, la défaite est généralement liée au temps.
+
+  }, [deck]);
 
   const handleCardPress = (index: number) => {
-    // Empêche le clic si le jeu est terminé
-    if (isChecking || selected.length === 2 || deck[index].isFlipped || isGameOver) return; 
+    if (isChecking || selected.length === 2 || deck[index].isFlipped || isGameOver) return; // AJOUT isGameOver
 
-    // ... (Logique de sélection inchangée)
+    // Retourner la carte
     setDeck(prevDeck =>
       prevDeck.map((card, i) =>
         i === index ? { ...card, isFlipped: true } : card

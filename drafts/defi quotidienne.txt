@@ -1,0 +1,7 @@
+super maintenant je veux implementer une notion pour tous les jeux . il s'agit du nombre de jours active dans le jeux 
+le principe est simple ça va presque fonctionner comme les xp mais sera impeu plus technique : par defaut ou initialement le nombre 
+de jours sera a zero avec une icone correspondante. et quand l'utilisateur jout un jeux pour la premiere fois un modal s'affiche pour indiquer
+que le nombre de jour s'incremente  pour etre plus claire si l'utilisateur etait deja a 7 jours d'activiter le modale affiche d'abors 7 puis change 
+en 8 et au bout de 4s par exple ça disparait (je tiens a preciser que c'est uniquement valable au premier tour de jeux que l'utilisateur joue de la journée
+pour n'importe quelle jeux comme il y'aura plusieur jeux) et si l'utilisateur passe une journée sans joueur son nombre de jours active repasse a 0
+quand

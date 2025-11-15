@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import { MotiView } from 'moti';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSettings } from '../../../hooks/useSettings';
@@ -25,7 +25,7 @@ const MemoryCard = ({ icon, isFlipped, isMatched, onPress, isDisabled, cardSize 
       <MotiView
         style={[
           styles.card,
-          {
+          { 
             width: cardSize,      // ← DYNAMIQUE : Applique la prop
             height: cardSize,
             // Optionnel : Ajuste margin si petites cartes
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   card: {
     // width: 70, // 👈 taille fixe
     // height: 70,  //remplacer par dynamique
-    margin: Platform.OS === 'android' ? 2 : 4,  // ← Moins de margin sur Android (ajoute import Platform)
+    margin: 4,
     borderWidth: 1, // 👈 visible
     borderColor: '#aaa',
     borderRadius: 8,

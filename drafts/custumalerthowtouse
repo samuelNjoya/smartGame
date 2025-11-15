@@ -1,0 +1,32 @@
+// 1. Importez le composant
+import CustomAlert, { AlertButton } from '../components/CustomAlert';
+
+// 2. Déclarez l'état pour contrôler la visibilité
+const [alertVisible, setAlertVisible] = useState(false);
+
+// 3. Configurez les boutons (optionnel)
+const alertButtons: AlertButton[] = [
+  {
+    text: "Annuler",
+    onPress: () => console.log("Annulé"),
+    style: 'cancel'
+  },
+  {
+    text: "Confirmer", 
+    onPress: () => console.log("Confirmé"),
+    textColor: '#4361EE' // Couleur personnalisée
+  }
+];
+
+// 4. Utilisez le composant dans votre JSX
+<CustomAlert
+  visible={alertVisible}
+  title="Titre de l'alerte"
+  message="Message descriptif de l'alerte"
+  type="success" // 'info' | 'warning' | 'error' | 'success'
+  buttons={alertButtons}
+  onClose={() => setAlertVisible(false)}
+/>
+
+// 5. Pour afficher l'alerte
+setAlertVisible(true);

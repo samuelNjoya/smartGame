@@ -38,8 +38,9 @@ export const RANDOM_XP_REWARDS = [
 export const MEMORY_LEVEL_PROGRESSION = {
   // Progression: [Min_Paires, Max_Paires]
   easy: [4, 10],   // 8 cartes à 20 cartes
-  medium: [8, 12],  // 16 cartes à 24 cartes
-  hard: [10, 15],  // 20 cartes à 30 cartes
+  medium: [10, 12],  // 16 cartes à 24 cartes 8 12
+  //hard: [10, 15],  // 20 cartes à 30 cartes
+  hard: [20, 30],
 };
 
 // NOUVELLE STRUCTURE POUR LA LIMITE DE COUPS (CONDITION DE DÉFAITE)

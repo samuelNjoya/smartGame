@@ -1,7 +1,7 @@
 // src/games/memory/MemoryGameScreen.tsx
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Alert, Dimensions } from 'react-native';
 import { useSettings } from '../../hooks/useSettings';
 import { usePlayer } from '../../hooks/usePlayer';
 import { GameScreenProps } from '../../navigation/types';
@@ -18,6 +18,9 @@ import { GameStackParamList } from '../../navigation/types';
 type Props = NativeStackScreenProps<GameStackParamList, 'Memory'>;
 
 const MemoryGameScreen = ({ route, navigation }: Props) => { // AJOUT de navigation
+
+  // const { width: screenWidth } = Dimensions.get('window');  // ← Largeur écran
+
   // Ajout du paramètre 'level'
   const { difficulty, level } = route.params;
   const { theme } = useSettings();
@@ -42,6 +45,46 @@ const MemoryGameScreen = ({ route, navigation }: Props) => { // AJOUT de navigat
   // Constante pour l'ID du jeu
   const GAME_ID: GameId = 'Memory';
 
+
+  // Dans le composant (après useStates)
+  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');  // ← Écran complet
+  const [dimensions, setDimensions] = useState(Dimensions.get('window'));
+
+  // // Nb rows = deck.length / numColumns (arrondi up)
+  // const numRows = Math.ceil(deck.length / numColumns);
+
+  // // Hauteur disponible pour grille (minus header + paddings + footer modal)
+  // const HEADER_HEIGHT = 100;  // ← Ajuste : title + moves text + margins (mesure tes styles)
+  // const PADDING_TOTAL = 40;   // ← Padding container + grid
+  // const AVAILABLE_HEIGHT = screenHeight - HEADER_HEIGHT - PADDING_TOTAL;
+
+  // // Taille carte : Uniforme, inclut gap (gap partagé entre rows)
+  // const GAP = 8;  // ← Ton gap existant
+  // const cardSize = Math.max(40, (AVAILABLE_HEIGHT - (numRows - 1) * GAP) / numRows);  // ← Min 40px pour lisibilité
+
+  // // NumColumns : Ton code + cap horizontal (pour petits écrans)
+  // const MAX_CARD_WIDTH = 80;  // ← Largeur max carte (ajuste si tes icônes scalent mal)
+  // const numColumns = Math.min(
+  //   difficulty === 'easy' ? 4 : difficulty === 'medium' ? 6 : 8,
+  //   Math.floor(screenWidth / MAX_CARD_WIDTH)
+  // );
+
+  // NumColumns EN PREMIER (dépend de screenWidth et difficulty, pas de deck)
+  const MAX_CARD_WIDTH = 50;  // ← Largeur max carte (ajuste si icônes scalent mal)
+  const baseColumns = difficulty === 'easy' ? 4 : difficulty === 'medium' ? 6 : 8;
+  const numColumns = Math.min(baseColumns, Math.floor(screenWidth / MAX_CARD_WIDTH));
+
+  // MAINTENANT numRows (après numColumns)
+  const numRows = Math.ceil(deck.length / numColumns);  // ← Plus de ReferenceError !
+
+  // Hauteur disponible pour grille (minus header + paddings)
+  const HEADER_HEIGHT = 100;  // ← Ajuste : title + moves text + margins (mesure tes styles)
+  const PADDING_TOTAL = 40;   // ← Padding container + grid
+  const AVAILABLE_HEIGHT = screenHeight - HEADER_HEIGHT - PADDING_TOTAL;
+
+  // Taille carte : Uniforme, inclut gap
+  const GAP = 8;  // ← Ton gap existant
+  const cardSize = Math.max(40, (AVAILABLE_HEIGHT - (numRows - 1) * GAP) / numRows);  // ← Min 40px pour lisibilité
   // Initialiser le jeu (maintenant sans dépense de vie ici)
   const initGame = () => {
     // La vérification des vies et spendLife() est faite dans LevelSelectScreen 
@@ -81,13 +124,14 @@ const MemoryGameScreen = ({ route, navigation }: Props) => { // AJOUT de navigat
 
   // Logique de vérification des paires (inchangée)
   useEffect(() => {
-    if (selected.length === 2) {
+    if (selected.length === 2 && !isGameOver) { // AJOUT de !isGameOver
       setIsChecking(true);
       const [firstIndex, secondIndex] = selected;
       const card1 = deck[firstIndex];
       const card2 = deck[secondIndex];
+      const isMatch = card1.icon === card2.icon;
 
-      if (card1.icon === card2.icon) {
+      if (isMatch) {
         setDeck(prevDeck =>
           prevDeck.map(card =>
             card.icon === card1.icon ? { ...card, isMatched: true } : card
@@ -108,51 +152,60 @@ const MemoryGameScreen = ({ route, navigation }: Props) => { // AJOUT de navigat
           setIsChecking(false);
         }, 1000);
       }
+      // On met à jour moves
       setMoves(m => m + 1);
+    }
 
-      // VÉRIFICATION DE DÉFAITE APRES AVOIR INCREMENTÉ LE MOUVEMENT
-      if (moves + 1 >= maxMoves) {
-        // On attend 1.5s pour que les dernières cartes se retournent si c'est un non-match
-       timerRef.current = setTimeout(() => { // Stocker le timeout
-        // AJOUT DE LA CONDITION: Vérifier si le jeu est déjà gagné 
-            // AVANT de déclarer la défaite
-          if (!deck.every(card => card.isMatched)) {
-            // DÉFAITE : Si le jeu n'est pas déjà gagné
-            setHasWon(false);
-            setIsGameOver(true);
-          }
-        }, 1500);
+    // Nettoyage: Toujours utile en cas de démontage
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [selected, isGameOver]); // isGameOver ajouté
+
+  // NOUVEL EFFECT : VÉRIFIE LA DÉFAITE SÉPARÉMENT
+  useEffect(() => {
+    if (isGameOver || maxMoves === 0) return; // Ne rien faire si c'est déjà fini
+
+    // La défaite est atteinte quand moves est egal ou DÉPASSE maxMoves
+    if (moves >= maxMoves) {
+      // Ligne de sécurité : on vérifie qu'on n'a pas gagné par hasard
+      if (!deck.every(card => card.isMatched)) {
+        // DÉFAITE immédiate (pas besoin de timeout car le dernier coup est terminé)
+        setHasWon(false);
+        setIsGameOver(true);
+
+        // Annuler tout timer potentiel au cas où
+        if (timerRef.current) clearTimeout(timerRef.current);
       }
     }
-    // Fonction de nettoyage: ANNULE LE TIMEOUT si le composant est démonté
-  // ou si cet effet est relancé (ce qui est le cas après le setState dans la victoire)
-  return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-  };
-  }, [selected, maxMoves]);//maxMoves ajouté comme dependance
+  }, [moves, maxMoves, isGameOver]); // Dépend de moves et maxMoves
 
-  // Vérifier la victoire (MODIFIÉ)
+
+  // VÉRIFIER LA VICTOIRE (MODIFIÉ : Annule le timer de défaite si présent)
   useEffect(() => {
-    if (deck.length > 0 && deck.every(card => card.isMatched)) {
+    if (deck.length > 0 && deck.every(card => card.isMatched) && !isGameOver) {
       // VICTOIRE !
-    if (timerRef.current) {
-        clearTimeout(timerRef.current); // <--- LIGNE CLÉ : ANNULE LA DÉFAITE DIFFÉRÉE
-    }
+      if (timerRef.current) {
+        clearTimeout(timerRef.current); // ANNULE LA DÉFAITE DIFFÉRÉE
+      }
       setHasWon(true);
-      // Au lieu d'une alerte et de l'ajout d'XP, on affiche le modal
       setIsGameOver(true);
-      // L'ajout d'XP et le déverrouillage sont gérés par GameEndModal
     }
+  }, [deck, isGameOver]);
 
-    // TODO: Ajouter une logique de défaite si le temps est écoulé ou si les coups max sont dépassés
-    // Dans Memory, la défaite est généralement liée au temps.
-
-  }, [deck]);
+  //rotation resize
+  //   useEffect(() => {
+  //   const subscription = Dimensions.addEventListener('change', (newDims) => {
+  //     setDimensions(newDims.window);  // ← Recalc numColumns/numRows/cardSize
+  //   });
+  //   return () => subscription?.remove();
+  // }, []);
 
   const handleCardPress = (index: number) => {
-    if (isChecking || selected.length === 2 || deck[index].isFlipped || isGameOver) return; // AJOUT isGameOver
+    // Empêche le clic si le jeu est terminé
+    if (isChecking || selected.length === 2 || deck[index].isFlipped || isGameOver) return;
 
-    // Retourner la carte
+    // ... (Logique de sélection inchangée)
     setDeck(prevDeck =>
       prevDeck.map((card, i) =>
         i === index ? { ...card, isFlipped: true } : card
@@ -162,7 +215,15 @@ const MemoryGameScreen = ({ route, navigation }: Props) => { // AJOUT de navigat
   };
 
   // Déterminer le nombre de colonnes en fonction de la difficulté (inchangé)
-  const numColumns = difficulty === 'easy' ? 4 : (difficulty === 'medium' ? 4 : 4);
+  // const numColumns = difficulty === 'easy' ? 4 : (difficulty === 'medium' ? 4 : 4);
+  //const numColumns = difficulty === 'easy' ? 4 : difficulty === 'medium' ? 6 : 8;
+
+  // Remplace ta const numColumns par ça (ajuste CARD_WIDTH si besoin)
+  // const CARD_WIDTH = 70;  // ← Ta largeur carte + gap/2 (mesure via MemoryCard styles)
+  // const numColumns = Math.max(
+  //   difficulty === 'easy' ? 4 : difficulty === 'medium' ? 6 : 8,  // ← Ton min basé sur diff
+  //   Math.floor(screenWidth / CARD_WIDTH)  // ← Max possible sans overflow
+  // );
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -171,9 +232,9 @@ const MemoryGameScreen = ({ route, navigation }: Props) => { // AJOUT de navigat
       </Text>
       {/* <Text style={[styles.moves, { color: theme.text }]}>Coups: {moves}</Text> */}
       <Text style={[styles.moves, { color: theme.text }]}>
-        Coups: {moves} / {maxMoves} 
+        Coups: {moves} / {maxMoves}
         <Text style={{ color: theme.error }}>
-            {` (${maxMoves - moves} restants)`}
+          {` (${maxMoves - moves} restants)`}
         </Text>
       </Text>
 
@@ -183,7 +244,7 @@ const MemoryGameScreen = ({ route, navigation }: Props) => { // AJOUT de navigat
           Préparation du jeu...
         </Text>
       )}
-
+      {/* 
       <FlatList
         data={deck}
         keyExtractor={item => item.id.toString()}
@@ -204,6 +265,71 @@ const MemoryGameScreen = ({ route, navigation }: Props) => { // AJOUT de navigat
             isMatched={item.isMatched}
             isDisabled={isChecking}
             onPress={() => handleCardPress(index)}
+          />
+        )}
+      /> */}
+
+      {/* <FlatList
+        data={deck}
+        keyExtractor={item => item.id.toString()}
+        numColumns={numColumns}
+        style={{
+          flexGrow: 0,
+          height: AVAILABLE_HEIGHT,  // ← Fixe hauteur exacte pour fit
+        }}
+        contentContainerStyle={[
+          styles.grid,
+          {
+            height: AVAILABLE_HEIGHT,  // ← Force le container à la hauteur calc
+            justifyContent: 'flex-start',  // ← Aligne top, pas center si trop haut
+          }
+        ]}
+        columnWrapperStyle={{
+          justifyContent: 'space-around',  // ← Répartit pour fit horizontal
+          gap: GAP,
+        }}
+        scrollEnabled={false}  // ← ZÉRO SCROLL ! Tout visible d'un coup
+        renderItem={({ item, index }) => (
+          <MemoryCard
+            icon={item.icon}
+            isFlipped={item.isFlipped}
+            isMatched={item.isMatched}
+            isDisabled={isChecking}
+            onPress={() => handleCardPress(index)}
+            cardSize={cardSize}  // ← NOUVELLE PROP : Passe la taille dynamique
+          />
+        )}
+      /> */}
+
+      <FlatList
+        data={deck}
+        keyExtractor={item => item.id.toString()}
+        numColumns={numColumns}
+        key={`memory-grid-${numColumns}-${deck.length}`}  // ← LA FIX : Force remount si cols ou deck change
+        style={{
+          flexGrow: 0,
+          height: AVAILABLE_HEIGHT,  // ← Fixe hauteur pour no-scroll
+        }}
+        contentContainerStyle={[
+          styles.grid,
+          {
+            height: AVAILABLE_HEIGHT,
+            justifyContent: 'flex-start',
+          }
+        ]}
+        columnWrapperStyle={{
+          justifyContent: 'space-around',
+          gap: GAP,
+        }}
+        scrollEnabled={false}  // ← Zéro scroll
+        renderItem={({ item, index }) => (
+          <MemoryCard
+            icon={item.icon}
+            isFlipped={item.isFlipped}
+            isMatched={item.isMatched}
+            isDisabled={isChecking}
+            onPress={() => handleCardPress(index)}
+            cardSize={cardSize}  // ← Passe la taille dynamique
           />
         )}
       />

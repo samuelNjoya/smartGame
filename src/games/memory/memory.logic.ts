@@ -5,7 +5,11 @@ import { MEMORY_LEVEL_PROGRESSION, GameDifficulty, MAX_LEVELS, MAX_MOVES_MULTIPL
 const ICONS = [
   'apple', 'bomb', 'car', 'database', 'ghost', 'heart',
   'laptop', 'lock', 'map', 'rocket', 'server', 'skull',
-  'star', 'trophy', 'wifi', 'xml'
+  'star', 'trophy', 'wifi', 'xml',
+  // NOUVELLES : Plus variées, thématiques (animaux, objets, etc.)
+  'airballoon', 'airplane', 'anchor', 'pencil', 'basket', 'bell', 'book', 'brain',
+  'cake', 'camera', 'cat', 'clock', 'cloud', 'coffee', 'diamond', 'dog',
+  'dragon', 'egg', 'fire', 'fish', 'flower', 'gift', 'home', 'icecream'
 ];
 
 export interface MemoryCardType {
@@ -14,33 +18,6 @@ export interface MemoryCardType {
   isFlipped: boolean;
   isMatched: boolean;
 }
-
-// Génère le set de cartes pour le jeu
-// export const generateDeck = (difficulty: 'easy' | 'medium' | 'hard'): MemoryCardType[] => {
-//   let pairCount: number;
-//   switch (difficulty) {
-//     case 'easy': pairCount = 4; break; // Grille 2x4
-//     case 'medium': pairCount = 6; break; // Grille 3x4
-//     case 'hard': pairCount = 8; break; // Grille 4x4
-//   }
-
-//   // Sélectionner les icônes
-//   const iconsForGame = ICONS.slice(0, pairCount);
-//   const cards = [...iconsForGame, ...iconsForGame]; // Créer les paires
-
-//   // Mélanger
-//   const shuffledCards = cards
-//     .map((icon, index) => ({
-//       id: index,
-//       icon: icon,
-//       isFlipped: false,
-//       isMatched: false,
-//     }))
-//     .sort(() => Math.random() - 0.5);
-
-//   return shuffledCards;
-// };
-
 
 
 // Fonction utilitaire pour interpoler la difficulté entre les niveaux
@@ -94,3 +71,21 @@ export const calculateMaxMoves = (difficulty: GameDifficulty, level: number): nu
     // La limite est (nombre de paires) * multiplicateur.
     return Math.ceil(pairCount * multiplier);
 }
+
+
+
+
+
+// const ICONS = [
+//   // Base (valides, garde)
+//   'apple', 'bomb', 'car', 'database', 'ghost', 'heart',
+//   'laptop', 'lock', 'map', 'rocket', 'server', 'skull',
+//   'star', 'trophy', 'wifi', 'xml',
+//   // Nouvelles valides (vérifiées sur Expo icons : pas de WARN)
+//   'airplane', 'anchor', 'basket', 'bell', 'book', 'brain',
+//   'cake', 'camera', 'cat', 'clock', 'cloud', 'coffee',
+//   'diamond', 'dog', 'dragon', 'egg', 'fire', 'fish',
+//   'flower', 'gift', 'home', 'ice-cream', 'leaf', 'lightbulb',
+//   'moon', 'music', 'pencil', 'pizza', 'rainbow', 'shield',
+//   'sun', 'tree', 'umbrella', 'water'
+// ];

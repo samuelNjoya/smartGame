@@ -60,3 +60,8 @@ Maintenant que toutes vos dépendances sont installées et synchronisées (grâc
 # react est en rouge Crtl + Shift + P et tu tape Reload Window puis entrer 
 
 modifier et ajouter les icone sur les boutons d'actions et ajouter aussi un bouton pour quitter
+
+# pour les icones et gradien
+npm install expo-linear-gradient react-native-vector-icons
+# pour netoyer
+npx expo start --clear

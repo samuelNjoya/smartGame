@@ -299,9 +299,10 @@ const LevelSelectScreen = ({ route, navigation }: Props) => {
   };
 
   const getDifficultyTitle = () => {
-    if (difficulty === 'easy') return 'Facile (1-100)';
-    if (difficulty === 'medium') return 'Moyen (1-75)';
-    return 'Difficile (1-50)';
+    if (difficulty === 'easy') return 'Facile (1-200)';
+    if (difficulty === 'medium') return 'Moyen (1-150)';
+    if (difficulty === 'hard') return 'Difficile (1-100)';
+    return 'Maitre (1-75)';
   }
 
   return (

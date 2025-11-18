@@ -36,8 +36,8 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
   // const numColumns = Math.min(baseColumns, Math.floor(screenWidth / MAX_CARD_WIDTH));
 
   // Dans le composant, remplace le bloc numColumns par ça :
-  const MAX_CARD_WIDTH = Platform.OS === 'android' ? 60 : 80;  // ← PETIT SUR ANDROID pour + cols (360/60=6)
-  const baseColumns = difficulty === 'easy' ? 4 : difficulty === 'medium' ? 6 : 8;
+  const MAX_CARD_WIDTH = Platform.OS === 'android' ? 50 : 60;  // ← PETIT SUR ANDROID pour + cols (360/60=6)
+  const baseColumns = difficulty === 'easy' ? 4 : difficulty === 'medium' ? 5 : 6;
   const numColumns = Math.min(baseColumns, Math.floor(screenWidth / MAX_CARD_WIDTH));  // ← Garde min, mais cap plus haut
 
   // Bonus : Log pour debug (enlève après test)
@@ -48,10 +48,10 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
 
   // Taille carte : Basée sur containerHeight RÉELLE (fallback 70 si pas mesuré)
   const GAP = 8;
-  let cardSize = 70;  // ← Default sûr
+  let cardSize = 50;  // ← Default sûr
   if (containerHeight > 0 && numRows > 0) {
     const availableForCards = containerHeight - (numRows - 1) * GAP;
-    cardSize = Math.max(40, Math.min(80, availableForCards / numRows));  // ← CAPS STRICTS : 40-80px
+    cardSize = Math.max(40, Math.min(50, availableForCards / numRows));  // ← CAPS STRICTS : 40-80px
   }
 
   console.log('Debug:', { numColumns, numRows, cardSize, containerHeight });

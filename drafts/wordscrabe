@@ -1,0 +1,67 @@
+PROMPT FINAL – MODULE COMPLET WORD SCRAMBLE
+
+(à coller tel quel dans ChatGPT pour générer le module complet du jeu)
+
+Génère un module de jeu complet nommé WordScramble pour une application Expo React Native en TypeScript, à intégrer dans /src/games/WordScramble. Le jeu consiste à afficher un mot mélangé que le joueur doit reconstituer avant la fin d’un timer. Le module doit être totalement autonome et fournir tout le nécessaire :
+
+Logique du jeu (sélection mot, mélange intelligent, timer, validation, gestion erreurs)
+
+Trois niveaux de difficulté, chacun donnant un score par mot réussi :
+
+Facile → 100 points
+
+Moyen → 75 points
+
+Difficile → 50 points
+
+Système XP basé sur la fidélité quotidienne :
+
++5 XP/jour pour les jours 1 à 3
+
++10 XP/jour du jour 4 au jour 7
+
++20 XP/jour si la série dépasse 7 jours
+
+Interface complète en React Native :
+
+Écran du jeu
+
+Affichage du mot mélangé
+
+Input de saisie
+
+Timer visible
+
+Bouton valider
+
+Feedback (bonne réponse / mauvaise réponse)
+
+Style moderne, responsive, simple à intégrer
+
+Structure interne obligatoire :
+
+WordScrambleScreen.tsx (UI + logique)
+
+wordScramble.logic.ts (algo, scoring, timer helpers)
+
+words.json (liste de mots par niveau)
+
+useWordScramble.ts (hook central du jeu)
+
+__tests__/wordScramble.test.ts (tests Jest complets)
+
+README.md (instructions d'installation et exécution avec expo start)
+
+Contraintes techniques :
+
+TypeScript strict
+
+Code propre, commenté, modulaire
+
+Aucun package externe non standard sans justification
+
+Responsive sur toutes tailles d’écran
+
+Zéro logique dans les composants UI (100% dans .logic.ts et le hook)
+
+Génère tout le code source, tous les fichiers, tous les assets, les tests, et le README dans un seul rendu organisé par blocs.

@@ -1,9 +1,10 @@
 // src/constants/gameData.ts
 
 export const MAX_LEVELS = {
-  easy: 100,
-  medium: 75,
-  hard: 50,
+  easy: 200,
+  medium: 150,
+  hard: 100,
+  master: 75,
 };
 
 export const GAMES = [
@@ -13,7 +14,7 @@ export const GAMES = [
   // Ajoutez d'autres jeux ici
 ];
 
-export type GameDifficulty = 'easy' | 'medium' | 'hard';
+export type GameDifficulty = 'easy' | 'medium' | 'hard' | 'master';
 export type GameId = 'Memory' | 'Quiz' | 'Snake' | 'RandomGame'; // Ajouter 'RandomGame' pour la leçon/recharge
 
 // Récompenses de base en XP pour chaque jeu/difficulté
@@ -22,6 +23,7 @@ export const BASE_XP_REWARDS = {
   easy: 50,
   medium: 100,
   hard: 150,
+  master: 200,
 };
 
 // Récompenses aléatoires pour les multiples de 10
@@ -37,16 +39,17 @@ export const RANDOM_XP_REWARDS = [
 // NOUVELLE STRUCTURE POUR LA PROGRESSION DES PAIRES DE MEMORY
 export const MEMORY_LEVEL_PROGRESSION = {
   // Progression: [Min_Paires, Max_Paires]
-  easy: [4, 10],   // 8 cartes à 20 cartes
-  medium: [10, 12],  // 16 cartes à 24 cartes 8 12
-  //hard: [10, 15],  // 20 cartes à 30 cartes
-  hard: [20, 30],
+  easy: [5, 10],   // 8 cartes à 20 cartes
+  medium: [8, 12],  // 16 cartes à 24 cartes 8 12
+  hard: [10, 15],  // 20 cartes à 30 cartes
+  master: [15, 20],
 };
 
 // NOUVELLE STRUCTURE POUR LA LIMITE DE COUPS (CONDITION DE DÉFAITE)
 // La formule sera (Nombre de paires * Multiplicateur de difficulté)
 export const MAX_MOVES_MULTIPLIER = {
   easy: 2.5,  // 2.5 fois le nombre de paires
-  medium: 2.0,  // 2.0 fois le nombre de paires
-  hard: 1.5,   // 1.5 fois le nombre de paires (très strict)
+  medium: 2.1,  // 2.0 fois le nombre de paires
+  hard: 1.9,   // 1.5 fois le nombre de paires (très strict)
+  master: 1.7,
 };

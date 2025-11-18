@@ -71,7 +71,7 @@ const NoLivesModal = ({ visible, onClose }: Props) => {
           {/* NOUVEAU BOUTON : Recharge complète contre 350 XP */}
           <View style={styles.buttonContainer}>
             <Button
-              title="Recharger complètement (350 XP)"
+              title="Recharger complètement (450 XP)"
               onPress={rechargeLivesWithXP}
               disabled={!canRecharge}
               color={theme.accent} // Utilisation de la couleur accent pour différencier

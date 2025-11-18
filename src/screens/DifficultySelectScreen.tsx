@@ -67,6 +67,14 @@ const difficulties: {
     icon: 'fire',
     description: 'Pour les experts'
   },
+  { 
+    key: 'master', 
+    label: 'Maître', 
+    color: PROFESSIONAL_COLORS.primary, // Utilise le Bleu Professionnel
+    gradient: ['#4361EE', '#6680FF'], // Un dégradé de bleu
+    icon: 'crown', // Un icône de couronne/trophée
+    description: 'Défiez l\'impossible'
+  },
 ];
 
 const DifficultySelectScreen = ({ route, navigation }: Props) => {
@@ -186,7 +194,7 @@ const DifficultySelectScreen = ({ route, navigation }: Props) => {
                   {/* Badge de difficulté */}
                   <View style={[styles.difficultyBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
                     <Text style={styles.badgeText}>
-                      {index + 1}/3
+                      {index + 1}/4
                     </Text>
                   </View>
                 </LinearGradient>

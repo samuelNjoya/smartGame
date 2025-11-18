@@ -3,7 +3,7 @@
 export const GAME_CONFIG = {
   // Système de vies
   MAX_LIVES: 5,
-  LIFE_REGEN_MINUTES: 5, // 5 minutes par vie
+  LIFE_REGEN_MINUTES: 12, // 5 minutes par vie
 
   // Boutique de vies (XP)
   LIFE_COST: {

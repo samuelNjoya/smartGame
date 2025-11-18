@@ -1,0 +1,11 @@
+Génère un module complet nommé DevineLeMot pour une application Expo React Native en TypeScript, à intégrer dans /src/games/DevineLeMot.
+ Le jeu consiste à deviner un mot caché en utilisant des indices et des lettres révélées progressivement, avec un nombre limité de tentatives
+  et un timer optionnel 
+selon la difficulté. Le module doit gérer trois niveaux de difficulté : Facile, Moyen, Difficile, avec des mots adaptés à chaque niveau et des indices 
+plus ou moins explicites. Chaque niveau comporte un certain nombre de mots à deviner, déverrouillés uniquement si
+ les mots précédents sont réussis. Le module doit inclure : l’UI moderne et responsive, affichage du mot masqué, indices dynamiques, lettres révélées,
+  bouton pour proposer une réponse, feedback visuel et sonore, timer et vies, score et XP, système de streak journalier (jours consécutifs joués), 
+sauvegarde via AsyncStorage, et progression adaptative selon performances passées. Le code doit être propre, strictement typé, commenté, modulaire,
+ et inclure des tests unitaires Jest pour la logique (validation des mots, gestion du timer, progression des niveaux, streaks). Fournis tous les 
+fichiers nécessaires : DevineLeMotScreen.tsx, devineLeMot.logic.ts, devineLeMot.data.ts (liste de mots/indices), useDevineLeMot.ts (hook), 
+composants réutilisables, animations Moti, et README avec instructions d’installation (expo start) et explications des packages utilisés.

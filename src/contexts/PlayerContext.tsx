@@ -27,7 +27,7 @@ type PlayerContextType = {
 export const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 
 // COÛT DÉDIÉ POUR LA RECHARGE COMPLÈTE EN XP
-const FULL_RECHARGE_XP_COST = 350;
+const FULL_RECHARGE_XP_COST = 450;
 
 export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [lives, setLives] = useState(GAME_CONFIG.MAX_LIVES);

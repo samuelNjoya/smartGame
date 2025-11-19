@@ -9,6 +9,7 @@ import GameEndModal from '../../components/modals/GameEndModal';
 import { GameId } from '../../constants/gameData';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { GameStackParamList } from '../../navigation/types';
+import { useSound } from '../../hooks/useSound';
 
 type Props = NativeStackScreenProps<GameStackParamList, 'Memory'>;
 
@@ -27,6 +28,7 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));  // ← Écran avec listener
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const GAME_ID: GameId = 'Memory';
+  const { playSound, vibrate } = useSound(); // UTILISATION DU HOOK pour le son et vibration
 
   const { width: screenWidth, height: screenHeight } = dimensions;  // ← Utilise state
 
@@ -36,7 +38,7 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
   const numColumns = Math.min(baseColumns, Math.floor(screenWidth / MAX_CARD_WIDTH));  // ← Garde min, mais cap plus haut
 
   // Bonus : Log pour debug (enlève après test)
-  console.log('Platform Debug:', { os: Platform.OS, screenWidth, maxCardW: MAX_CARD_WIDTH, numColumns });
+  //console.log('Platform Debug:', { os: Platform.OS, screenWidth, maxCardW: MAX_CARD_WIDTH, numColumns });
 
   // NumRows (après numColumns)
   const numRows = deck.length > 0 ? Math.ceil(deck.length / numColumns) : 0;
@@ -49,7 +51,7 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
     cardSize = Math.max(40, Math.min(50, availableForCards / numRows));  // ← CAPS STRICTS : 40-80px
   }
 
-  console.log('Debug:', { numColumns, numRows, cardSize, containerHeight });
+  //console.log('Debug:', { numColumns, numRows, cardSize, containerHeight });
   // Listener resize (ACTIF maintenant)
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', (newDims) => {
@@ -88,6 +90,9 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
       const card2 = deck[secondIndex];
       const isMatch = card1.icon === card2.icon;
       if (isMatch) {
+        // SUCCÈS
+        playSound('success');
+        vibrate('success');
         setDeck(prevDeck =>
           prevDeck.map(card =>
             card.icon === card1.icon ? { ...card, isMatched: true } : card
@@ -96,6 +101,9 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
         setSelected([]);
         setIsChecking(false);
       } else {
+        // ERREUR
+        playSound('error');
+        vibrate('error');
         timerRef.current = setTimeout(() => {
           setDeck(prevDeck =>
             prevDeck.map((card, index) =>
@@ -119,6 +127,9 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
     if (isGameOver || maxMoves === 0) return;
     if (moves >= maxMoves) {
       if (!deck.every(card => card.isMatched)) {
+        // DÉFAITE
+        playSound('lose'); // SON DE DÉFAITE
+        vibrate('error');
         setHasWon(false);
         setIsGameOver(true);
         if (timerRef.current) clearTimeout(timerRef.current);
@@ -128,6 +139,9 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
 
   useEffect(() => {
     if (deck.length > 0 && deck.every(card => card.isMatched) && !isGameOver) {
+      // VICTOIRE
+      playSound('win'); // SON DE VICTOIRE
+      vibrate('success');
       if (timerRef.current) clearTimeout(timerRef.current);
       setHasWon(true);
       setIsGameOver(true);
@@ -136,6 +150,8 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
 
   const handleCardPress = (index: number) => {
     if (isChecking || selected.length === 2 || deck[index].isFlipped || isGameOver) return;
+    // CLICK
+    playSound('click'); // SON DE CLIC
     setDeck(prevDeck =>
       prevDeck.map((card, i) =>
         i === index ? { ...card, isFlipped: true } : card
@@ -194,7 +210,7 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
               onPress={() => handleCardPress(index)}
               cardSize={cardSize}
             />
-            
+
           )}
         />
       </View>

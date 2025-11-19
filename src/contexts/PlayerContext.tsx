@@ -95,7 +95,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     StorageService.set('player:lives', newLives.toString());
     
     // Ajouter une tâche de régénération si on n'est pas déjà plein
-    if (lives < GAME_CONFIG.MAX_LIVES) {
+    if (newLives < GAME_CONFIG.MAX_LIVES) { // utiliser newLives ici au lieu de lives
       const now = Date.now();
       const lastJobEndTime = regenJobs.length > 0 ? regenJobs[regenJobs.length - 1].endTime : now;
       

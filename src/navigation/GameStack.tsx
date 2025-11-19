@@ -9,8 +9,8 @@ import GameListScreen from '../screens/GameListScreen';
 import MemoryGameScreen from '../games/memory/MemoryGameScreen';
 import QuizGameScreen from '../games/quiz/QuizGameScreen';
 import SnakeGameScreen from '../games/snake/SnakeGameScreen';
-import DifficultySelectScreen from '../screens/DifficultySelectScreen';
-import LevelSelectScreen from '../screens/LevelSelectScreen';
+import DifficultySelectScreen from '../screens/levels/DifficultySelectScreen';
+import LevelSelectScreen from '../screens/levels/LevelSelectScreen';
 
 const Stack = createNativeStackNavigator<GameStackParamList>();
 

@@ -11,9 +11,9 @@ import {
   Animated
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { GameStackParamList } from '../navigation/types';
-import { useSettings } from '../hooks/useSettings';
-import { GameDifficulty, MAX_LEVELS } from '../constants/gameData';
+import { GameStackParamList } from '../../navigation/types';
+import { useSettings } from '../../hooks/useSettings';
+import { GameDifficulty, MAX_LEVELS } from '../../constants/gameData';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 

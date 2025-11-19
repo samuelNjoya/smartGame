@@ -65,3 +65,40 @@ modifier et ajouter les icone sur les boutons d'actions et ajouter aussi un bout
 npm install expo-linear-gradient react-native-vector-icons
 # pour netoyer
 npx expo start --clear
+
+# pour les sons et vibration 
+https://pixabay.com +
+https://mixkit.co/free-sound-effects/ +++++++
+
+import { Audio } from 'expo-av';  npx expo install expo-av
+import * as Haptics from 'expo-haptics'; // Optionnel pour les vibrations
+expo install expo-haptics vibration
+
+
+# pour compresser les images 
+Optimizilla (compresse JPEG, PNG, GIF, jusqu'à 20 images simultanément) :
+https://imagecompressor.com/fr/
+
+Compressor.io (compresse JPEG, PNG, GIF avec haute qualité) :
+https://compressor.io
+
+TinyPNG (compresse PNG et JPG, téléchargements groupés au format zip) :
+https://tinypng.com
+
+
+# pour installer 
+npx expo build:android -t apk faux
+smart-games.apk
+
+npm install -g eas-cli
+eas login //se connecter a expo samuel24 et mon mot de passe
+eas build:configure //configurer le projet une seule fois
+eas whoami se rassurer d'etre connecter
+
+https://expo.dev/accounts/samuel24/projects/smart-games/builds/90d7f655-a456-48b7-b049-edd5b2a0b4e0
+lien final
+eas build -p android --profile preview  //lancer la generation d'un apk installable partout
+
+
+
+

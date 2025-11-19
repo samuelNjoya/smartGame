@@ -1,15 +1,48 @@
 // src/screens/HomeScreen.tsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Button } from 'react-native';
 import { useSettings } from '../hooks/useSettings';
 import { usePlayer } from '../hooks/usePlayer';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { GAME_CONFIG } from '../constants/config';
 
+// AJOUT : Fonction formatTime (réutilisée du modal)
+const formatTime = (ms: number) => {
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+};
+
 // Un composant pour afficher les coeurs
 const LifeHearts = () => {
-  const { lives } = usePlayer();
+
+  const { lives,regenJobs } = usePlayer(); // AJOUT : regenJobs pour le timer
   const { theme } = useSettings();
+  const [timeLeft, setTimeLeft] = useState('00:00');  // AJOUT : State pour le timer
+
+  // AJOUT : useEffect pour updater le timer si jobs actifs
+  useEffect(() => {
+    if (regenJobs.length > 0) {
+      const firstJob = regenJobs[0];
+      const updateTimer = () => {
+        const remaining = firstJob.endTime - Date.now();
+        if (remaining <= 0) {
+          setTimeLeft('00:00');
+          // Optionnel : Ici, tu peux trigger une recharge via usePlayer si besoin
+        } else {
+          setTimeLeft(formatTime(remaining));
+        }
+      };
+      
+      updateTimer();  // Immédiat
+      const interval = setInterval(updateTimer, 1000);
+      return () => clearInterval(interval);  // Cleanup anti-leak !
+    } else {
+      setTimeLeft('00:00');  // Reset si pas de job
+    }
+  }, [regenJobs]);  // Dépendance : re-run si jobs changent
+
   const hearts = [];
   for (let i = 0; i < GAME_CONFIG.MAX_LIVES; i++) {
     hearts.push(
@@ -21,7 +54,20 @@ const LifeHearts = () => {
       />
     );
   }
-  return <View style={styles.heartsContainer}>{hearts}</View>;
+  // AJOUT : Affichage du timer seulement si actif
+  const showTimer = timeLeft !== '00:00';
+
+  return (
+    <View style={styles.heartsContainer}>
+      <View style={styles.heartsRow}>{hearts}</View>  {/* Row pour cœurs */}
+      {showTimer && (
+        <Text style={[styles.timerText, { color: theme.primary }]}>
+          Prochaine vie : {timeLeft}
+        </Text>
+      )}
+    </View>
+  );
+  //return <View style={styles.heartsContainer}>{hearts}</View>;
 };
 
 const HomeScreen = () => {
@@ -64,8 +110,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  heartsContainer: {
+heartsContainer: {
+    alignItems: 'center',  // MODIFIÉ : Centré pour timer sous cœurs
+  },
+  heartsRow: {  // AJOUT : Nouveau style pour row des cœurs
     flexDirection: 'row',
+  },
+  timerText: {  // AJOUT : Style pour le timer (discret)
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 5,
+    textAlign: 'center',
   },
   xpContainer: {
     flexDirection: 'row',

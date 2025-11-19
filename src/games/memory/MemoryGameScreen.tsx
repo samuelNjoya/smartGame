@@ -30,12 +30,7 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
 
   const { width: screenWidth, height: screenHeight } = dimensions;  // ← Utilise state
 
-  // NumColumns (premier, indépendant de deck)
-  // const MAX_CARD_WIDTH = 80;  // ← RAISONNABLE : Permet 4-5 cols sur mobile
-  // const baseColumns = difficulty === 'easy' ? 4 : difficulty === 'medium' ? 6 : 8;
-  // const numColumns = Math.min(baseColumns, Math.floor(screenWidth / MAX_CARD_WIDTH));
 
-  // Dans le composant, remplace le bloc numColumns par ça :
   const MAX_CARD_WIDTH = Platform.OS === 'android' ? 50 : 60;  // ← PETIT SUR ANDROID pour + cols (360/60=6)
   const baseColumns = difficulty === 'easy' ? 4 : difficulty === 'medium' ? 5 : 6;
   const numColumns = Math.min(baseColumns, Math.floor(screenWidth / MAX_CARD_WIDTH));  // ← Garde min, mais cap plus haut

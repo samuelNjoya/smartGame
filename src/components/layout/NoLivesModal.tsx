@@ -68,7 +68,7 @@ const NoLivesModal = ({ visible, onClose }: Props) => {
             color={theme.primary}
           />
 
-          {/* NOUVEAU BOUTON : Recharge complète contre 350 XP */}
+          {/* NOUVEAU BOUTON : Recharge complète contre 450 XP */}
           <View style={styles.buttonContainer}>
             <Button
               title="Recharger complètement (450 XP)"

@@ -85,6 +85,13 @@ const GameEndModal = ({
   const handleReplay = () => handleNavigation(level);
   const handleNext = () => handleNavigation(level + 1);
   const handlePrev = () => handleNavigation(level - 1);
+    // NOUVELLE FONCTION : Quitter et retourner à la liste des niveaux
+  const handleQuit = () => {
+    onClose();
+    // Utiliser popToTop pour garantir de sortir de la boucle de jeu  et revenir à l'écran de LevelSelect
+    navigation.popToTop(); 
+    navigation.navigate('LevelSelect', { gameId, gameName: gameId, difficulty }); 
+  };
   
   // On ne peut pas revenir avant le niveau 1
   const showPrevButton = level > 1; 
@@ -137,7 +144,7 @@ const GameEndModal = ({
                 <Button 
                   title="Précédent" 
                   onPress={handlePrev} 
-                  color={theme.secondary}
+                  color={theme.accent}
                 />
               )}
               <Button 
@@ -153,6 +160,11 @@ const GameEndModal = ({
                   disabled={!isNewLevelUnlocked && level >= maxLevels}
                 />
               )}
+               <Button 
+                title="Quitter" 
+                onPress={handleQuit} 
+                color={theme.secondary}
+              />
               {!showNextButton && <Button title="Liste des niveaux" onPress={onClose} color={theme.text} />}
             </View>
 

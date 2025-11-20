@@ -94,7 +94,7 @@ const GameEndModal = ({
   };
   
   // On ne peut pas revenir avant le niveau 1
-  const showPrevButton = level > 1; 
+  //const showPrevButton = level > 1; 
   // On ne peut pas aller au-delà du dernier niveau
   const showNextButton = level < maxLevels; 
   
@@ -140,13 +140,13 @@ const GameEndModal = ({
 
             {/* Pied du modal (Navigation) */}
             <View style={styles.navContainer}>
-              {showPrevButton && (
+              {/* {showPrevButton && (
                 <Button 
                   title="Précédent" 
                   onPress={handlePrev} 
                   color={theme.accent}
                 />
-              )}
+              )} */}
               <Button 
                 title="Rejouer" 
                 onPress={handleReplay} 

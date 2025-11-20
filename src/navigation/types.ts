@@ -38,6 +38,7 @@ export type GameStackParamList = {
 export type RootStackParamList = {
   Main: undefined; // Les onglets principaux
   GameStack: undefined; // La pile des jeux
+  Splash: undefined; // <--- NOUVELLE ROUTE INITIALE
   // ... autres écrans globaux (ex: Modals)
 };
 

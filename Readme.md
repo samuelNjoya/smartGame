@@ -86,10 +86,7 @@ TinyPNG (compresse PNG et JPG, téléchargements groupés au format zip) :
 https://tinypng.com
 
 
-# pour installer 
-npx expo build:android -t apk faux
-smart-games.apk
-
+# pour installer  EAS expo application service
 npm install -g eas-cli
 eas login //se connecter a expo samuel24 et mon mot de passe
 eas build:configure //configurer le projet une seule fois

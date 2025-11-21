@@ -63,8 +63,9 @@ modifier et ajouter les icone sur les boutons d'actions et ajouter aussi un bout
 
 # pour les icones et gradien
 npm install expo-linear-gradient react-native-vector-icons
-# pour netoyer
+# pour netoyer / gerer le splash
 npx expo start --clear
+npx expo install expo-splash-screen
 
 # pour les sons et vibration 
 https://pixabay.com +

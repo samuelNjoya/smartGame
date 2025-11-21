@@ -6,6 +6,7 @@ import { useSettings } from '../hooks/useSettings';
 import { RootStackParamList } from './types';
 import MainTabs from './MainTabs';
 import { StatusBar } from 'expo-status-bar';
+import SplashScreen from '../components/SplashScreen'; // Assurez-vous que le chemin est correct
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -28,7 +29,12 @@ const AppNavigator = () => {
   return (
     <NavigationContainer theme={navigationTheme}>
       <StatusBar style={isDarkMode ? 'light' : 'dark'} />
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator
+        initialRouteName="Splash" // Définir Splash comme écran initial
+        screenOptions={{ headerShown: false, animation: 'fade' }}
+      >
+        <Stack.Screen name="Splash" component={SplashScreen} />
+        {/* Pile principale avec les onglets */}
         <Stack.Screen name="Main" component={MainTabs} />
         {/* Vous pouvez ajouter des écrans modaux globaux ici */}
       </Stack.Navigator>

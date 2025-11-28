@@ -75,6 +75,12 @@ import { Audio } from 'expo-av';  npx expo install expo-av
 import * as Haptics from 'expo-haptics'; // Optionnel pour les vibrations
 expo install expo-haptics vibration
 
+# expo notification 
+afficher les informations sur l'ecran via expo-notifications
+integration d'une lampe torche et d'un stroboscope via expo-camera
+utilisation du GPS de l'appareil via expo-location et affichage de la localisation react-native-maps
+
+Stockage Local : Utilisez expo-sqlite pour des données structurées complexes (liste de produits, notes, parcours) ou expo-file-system pour des fichiers (images, exports). AsyncStorage est bien pour de petites données simples.
 
 # pour compresser les images 
 Optimizilla (compresse JPEG, PNG, GIF, jusqu'à 20 images simultanément) :

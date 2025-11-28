@@ -28,7 +28,7 @@ export const useSound = () => {
     // 1. Chargement des sons au montage
     useEffect(() => {
         const loadSounds = async () => {
-            console.log("--- AUDIO DIAGNOSTIC: Démarrage du chargement des sons ---");
+         //   console.log("--- AUDIO DIAGNOSTIC: Démarrage du chargement des sons ---");
             try {
                 // Configuration initiale de la catégorie audio
                 await Audio.setAudioModeAsync({
@@ -78,7 +78,7 @@ export const useSound = () => {
 
     // 3. Fonction pour jouer un son (appelée par les jeux)
     const playSound = useCallback((event: SoundEvent) => {
-        console.log(`AUDIO DIAGNOSTIC: Tentative de jouer le son '${event}'.`);
+      //  console.log(`AUDIO DIAGNOSTIC: Tentative de jouer le son '${event}'.`);
         if (!isSoundEnabled) return;
 
         const soundObject = soundRefs.current[event];

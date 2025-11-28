@@ -11,11 +11,12 @@ export const GAMES = [
   { id: 'Memory', name: 'Memory', icon: 'cards' },
   { id: 'Quiz', name: 'Quiz de Culture Générale', icon: 'lightbulb-on' },
   { id: 'Snake', name: 'Snake', icon: 'snake' },
+  { id: 'NeuroPuzzle', name: 'NeuroPuzzle', icon: 'brain' }, // AJOUT (Utilisez une icône MaterialCommunityIcons valide comme 'brain')
   // Ajoutez d'autres jeux ici
 ];
 
 export type GameDifficulty = 'easy' | 'medium' | 'hard' | 'master';
-export type GameId = 'Memory' | 'Quiz' | 'Snake' | 'RandomGame'; // Ajouter 'RandomGame' pour la leçon/recharge
+export type GameId = 'Memory' | 'Quiz' | 'Snake' | 'NeuroPuzzle' | 'RandomGame'; // Ajouter 'RandomGame' pour la leçon/recharge
 
 // Récompenses de base en XP pour chaque jeu/difficulté
 // Ces valeurs seront doublées pour les multiples de 5

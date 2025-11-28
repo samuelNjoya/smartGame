@@ -31,6 +31,7 @@ export type GameStackParamList = {
   Quiz: { difficulty: GameDifficulty; level: number };
   Memory: { difficulty: GameDifficulty; level: number };
   Snake: { difficulty: GameDifficulty; level: number };
+  NeuroPuzzle: { difficulty: GameDifficulty; level: number }; // AJOUT
   // ... autres jeux
 };
 

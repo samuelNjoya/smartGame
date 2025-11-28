@@ -11,6 +11,7 @@ import QuizGameScreen from '../games/quiz/QuizGameScreen';
 import SnakeGameScreen from '../games/snake/SnakeGameScreen';
 import DifficultySelectScreen from '../screens/levels/DifficultySelectScreen';
 import LevelSelectScreen from '../screens/levels/LevelSelectScreen';
+import NeuroPuzzleScreen from '../games/neuroPuzzle/NeuroPuzzleScreen';
 
 const Stack = createNativeStackNavigator<GameStackParamList>();
 
@@ -47,6 +48,7 @@ const GameStack = () => {
       <Stack.Screen name="Quiz" component={QuizGameScreen} options={{ title: 'Quiz Culture' }} />
       {/* JEU SQUELETTE */}
       <Stack.Screen name="Snake" component={SnakeGameScreen} options={{ title: 'Snake' }} />
+      <Stack.Screen name="NeuroPuzzle" component={NeuroPuzzleScreen} options={{ title: 'NeuroPuzzle' }} />
       
       {/* <Stack.Screen name="Sudoku" component={SudokuScreen} />
       <Stack.Screen name="TicTacToe" component={TicTacToeScreen} /> 

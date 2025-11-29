@@ -40,7 +40,7 @@ export const useSound = () => {
                     playsInSilentModeIOS: true, // Pour jouer même en mode silencieux
                     shouldDuckAndroid: true, // option supplémentaire pour un meilleur comportement
                 });
-                console.log("AUDIO DIAGNOSTIC: Audio mode configuré.");
+               // console.log("AUDIO DIAGNOSTIC: Audio mode configuré.");
                 let loadError = false;
                 for (const event in soundMap) {
                     try {
@@ -48,16 +48,16 @@ export const useSound = () => {
                             soundMap[event],
                             { shouldPlay: false }
                         );
-                        console.log(`AUDIO DIAGNOSTIC: Son '${event}' chargé avec succès.`);
+                      //  console.log(`AUDIO DIAGNOSTIC: Son '${event}' chargé avec succès.`);
                         soundRefs.current[event] = sound;
                     } catch (e) {
-                        console.error(`Erreur de chargement du son ${event}:`, e);
+                       // console.error(`Erreur de chargement du son ${event}:`, e);
                         loadError = true;
                     }
                 }
                 if (!loadError) {
                     setIsLoaded(true);
-                    console.log("--- AUDIO DIAGNOSTIC: Tous les sons chargés. isLoaded = true. ---");
+                   // console.log("--- AUDIO DIAGNOSTIC: Tous les sons chargés. isLoaded = true. ---");
                 }
             } catch (e) {
                 console.error("AUDIO DIAGNOSTIC: Erreur critique lors de la configuration audio ou du chargement.", e);
@@ -69,7 +69,7 @@ export const useSound = () => {
 
         // 2. Déchargement des sons au démontage
         return () => {
-            console.log("AUDIO DIAGNOSTIC: Déchargement des sons.");
+         //   console.log("AUDIO DIAGNOSTIC: Déchargement des sons.");
             for (const event in soundRefs.current) {
                 soundRefs.current[event]?.unloadAsync();
             }

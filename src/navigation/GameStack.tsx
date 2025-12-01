@@ -14,6 +14,7 @@ import LevelSelectScreen from '../screens/levels/LevelSelectScreen';
 import NeuroPuzzleScreen from '../games/neuroPuzzle/NeuroPuzzleScreen';
 import WordScrambleScreen from '../games/wordScramble/WordScrambleScreen';
 import MathRushScreen from '../games/mathRush/MathRushScreen';
+import WordGuessScreen from '../games/wordGuess/WordGuessScreen';
 
 const Stack = createNativeStackNavigator<GameStackParamList>();
 
@@ -52,8 +53,9 @@ const GameStack = () => {
       <Stack.Screen name="NeuroPuzzle" component={NeuroPuzzleScreen} options={{ title: 'NeuroPuzzle' }} />
       <Stack.Screen name="WordScramble" component={WordScrambleScreen} options={{ title: 'Mots Mêlés' }} />
       <Stack.Screen name="MathRush" component={MathRushScreen} options={{ title: 'Calcul Express' }}/>
+      <Stack.Screen name="WordGuess" component={WordGuessScreen} options={{ title: 'Dévine le Mot' }}/>
       
-      {/* <Stack.Screen name="Sudoku" component={SudokuScreen} />
+      {/* <Stack.Screen name="Sudoku" component={SudokuScreen} /> 
       <Stack.Screen name="TicTacToe" component={TicTacToeScreen} /> 
       */}
     </Stack.Navigator>

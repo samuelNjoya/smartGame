@@ -14,11 +14,12 @@ export const GAMES = [
   { id: 'NeuroPuzzle', name: 'NeuroPuzzle', icon: 'brain' }, // AJOUT (Utilisez une icône MaterialCommunityIcons valide comme 'brain')
   { id: 'WordScramble', name: 'Mots Mêlés', icon: 'format-letter-case' }, // AJOUT pour afficher dans la liste des jeux
   { id: 'MathRush', name: 'Calcul Express', icon: 'calculator' }, // AJOUT
+ // { id: 'WordGuess', name: 'Devine le Mot', icon: 'format-text-variant' }, // AJOUT a completer plutart
   // Ajoutez d'autres jeux ici
 ];
 
 export type GameDifficulty = 'easy' | 'medium' | 'hard' | 'master';
-export type GameId = 'Memory' | 'Quiz' | 'Snake' | 'NeuroPuzzle' | 'WordScramble'| 'MathRush'| 'RandomGame'; // Ajouter 'RandomGame' pour la leçon/recharge
+export type GameId = 'Memory' | 'Quiz' | 'Snake' | 'NeuroPuzzle' | 'WordScramble'| 'MathRush'| 'WordGuess' | 'RandomGame'; // Ajouter 'RandomGame' pour la leçon/recharge
 
 // Récompenses de base en XP pour chaque jeu/difficulté
 // Ces valeurs seront doublées pour les multiples de 5

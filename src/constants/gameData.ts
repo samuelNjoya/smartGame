@@ -9,8 +9,8 @@ export const MAX_LEVELS = {
 
 export const GAMES = [
   { id: 'Memory', name: 'Memory', icon: 'cards' },
-  { id: 'Quiz', name: 'Quiz de Culture Générale', icon: 'lightbulb-on' },
-  { id: 'Snake', name: 'Snake', icon: 'snake' },
+  // { id: 'Quiz', name: 'Quiz de Culture Générale', icon: 'lightbulb-on' },
+  // { id: 'Snake', name: 'Snake', icon: 'snake' },
   { id: 'NeuroPuzzle', name: 'NeuroPuzzle', icon: 'brain' }, // AJOUT (Utilisez une icône MaterialCommunityIcons valide comme 'brain')
   { id: 'WordScramble', name: 'Mots Mêlés', icon: 'format-letter-case' }, // AJOUT pour afficher dans la liste des jeux
   { id: 'MathRush', name: 'Calcul Express', icon: 'calculator' }, // AJOUT

@@ -165,11 +165,11 @@ const WordScrambleScreen = ({ route, navigation }: Props) => {
     setWords(newWords);
     
     // Vérifier Power-Ups
-    if (newStreak === 5) Alert.alert("🔥 Série de 5 !", "Double XP activé pour le prochain mot !");
-    if (newStreak === 10) {
-       Alert.alert("⚡️ Série de 10 !", "+10 secondes bonus !");
-       setTimeLeft(t => t + 10);
-    }
+    // if (newStreak === 5) Alert.alert("🔥 Série de 5 !", "Double XP activé pour le prochain mot !");
+    // if (newStreak === 10) {
+    //    Alert.alert("⚡️ Série de 10 !", "+10 secondes bonus !");
+    //    setTimeLeft(t => t + 10);
+    // }
 
     nextWord();
   };

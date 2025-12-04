@@ -346,7 +346,7 @@ const NeuroPuzzleScreen = ({ route, navigation }: Props) => {
 const styles = StyleSheet.create({
     container: { flex: 1, alignItems: 'center', padding: 20 },
     title: { fontSize: 24, fontWeight: 'bold', marginBottom: 10 },
-    infoContainer: { width: '100%', marginBottom: 20, minHeight: 60 },
+    infoContainer: { width: '100%', marginBottom: 12, minHeight: 40 },
     phaseText: { fontSize: 18, textAlign: 'center', fontWeight: '600' },
     timerText: { fontSize: 24, fontWeight: 'bold', textAlign: 'center' },
 
@@ -365,13 +365,13 @@ const styles = StyleSheet.create({
 
     paletteContainer: {
         flexDirection: 'row',
-        marginTop: 30,
+        marginTop: 15,
         justifyContent: 'center',
-        gap: 15,
+        gap: 10,
     },
     paletteButton: {
-        width: 50,
-        height: 50,
+        width: 45,
+        height: 45,
         borderRadius: 25,
         elevation: 4,
         shadowColor: '#000',
@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
     },
 
     validateButton: {
-        marginTop: 30,
+        marginTop: 15,
         flexDirection: 'row',
         alignItems: 'center',
         paddingVertical: 12,
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     },
     validateButtonText: {
         color: '#FFF',
-        fontSize: 18,
+        fontSize: 15,
         fontWeight: 'bold',
         marginRight: 10,
     },

@@ -92,6 +92,9 @@ https://compressor.io
 TinyPNG (compresse PNG et JPG, téléchargements groupés au format zip) :
 https://tinypng.com
 
+# graph plus dependance
+npx expo install react-native-chart-kit react-native-svg
+
 
 # pour installer  EAS expo application service
 npm install -g eas-cli

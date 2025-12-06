@@ -39,7 +39,7 @@ interface HelpState {
 }
 
 const MathRushScreen = ({ route, navigation }: Props) => {
-    const { difficulty, level } = route.params;
+    const { difficulty, level, isDailyChallenge } = route.params;
     const { theme } = useSettings();
     const { playSound, vibrate } = useSound();
     const { addXP, spendLife } = usePlayer();
@@ -311,6 +311,7 @@ const MathRushScreen = ({ route, navigation }: Props) => {
                 isVictory={currentState.hasWonLevel}
                 score={currentState.totalPoints}
                 navigation={navigation}
+                isDailyChallenge={isDailyChallenge} // 2. Passer au modal
                 onClose={() => {
                     navigation.popToTop();
                     navigation.navigate('LevelSelect', {

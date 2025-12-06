@@ -17,7 +17,7 @@ type Props = NativeStackScreenProps<GameStackParamList, 'NeuroPuzzle'>;
 const { width } = Dimensions.get('window');
 
 const NeuroPuzzleScreen = ({ route, navigation }: Props) => {
-    const { difficulty, level } = route.params;
+    const { difficulty, level, isDailyChallenge } = route.params;
     const { theme } = useSettings();
     const { playSound, vibrate } = useSound();
 
@@ -330,6 +330,7 @@ const NeuroPuzzleScreen = ({ route, navigation }: Props) => {
                 level={level}
                 isVictory={hasWon}
                 navigation={navigation}
+                isDailyChallenge={isDailyChallenge} //  Passer au modal
                 onClose={() => {
                     navigation.popToTop();
                     navigation.navigate('LevelSelect', {

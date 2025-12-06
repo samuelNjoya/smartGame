@@ -16,7 +16,7 @@ type Props = NativeStackScreenProps<GameStackParamList, 'WordScramble'>;
 const { width } = Dimensions.get('window');
 
 const WordScrambleScreen = ({ route, navigation }: Props) => {
-  const { difficulty, level } = route.params;
+  const { difficulty, level, isDailyChallenge } = route.params;
   const { theme } = useSettings();
   const { playSound, vibrate } = useSound();
   
@@ -314,6 +314,7 @@ const WordScrambleScreen = ({ route, navigation }: Props) => {
         level={level}
         isVictory={hasWonLevel}
         navigation={navigation}
+        isDailyChallenge={isDailyChallenge} // 2. Passer au modal
         onClose={() => {
           navigation.popToTop();
           navigation.navigate('LevelSelect', { 

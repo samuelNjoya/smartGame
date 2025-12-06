@@ -14,7 +14,7 @@ import { useSound } from '../../hooks/useSound';
 type Props = NativeStackScreenProps<GameStackParamList, 'Memory'>;
 
 const MemoryGameScreen = ({ route, navigation }: Props) => {
-  const { difficulty, level } = route.params;
+  const { difficulty, level, isDailyChallenge } = route.params;
   const { theme } = useSettings();
   const { lives } = usePlayer();
   const [deck, setDeck] = useState<MemoryCardType[]>([]);
@@ -221,6 +221,7 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
         level={level}
         isVictory={hasWon}
         navigation={navigation}
+        isDailyChallenge={isDailyChallenge} // 2. Passer au modal
         onClose={() => {
           navigation.popToTop();
           navigation.navigate('LevelSelect', { gameId: GAME_ID, gameName: 'Memory', difficulty });

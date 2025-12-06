@@ -11,6 +11,7 @@ import { BASE_XP_REWARDS, GameDifficulty, GameId, MAX_LEVELS } from '../../const
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import RandomRewardModal from './RandomRewardModal'; // NOUVEL IMPORT
 import { GameResult } from '../../contexts/PlayerContext';
+import DailyChallengeService from '../../services/DailyChallengeService';
 // On crée un type partiel pour les stats pour les props
 type GameStats = Partial<GameResult['stats']>;
 
@@ -27,6 +28,7 @@ type GameEndModalProps = {
   // La navigation est passée en prop pour manipuler l'empilement
   navigation: NativeStackNavigationProp<GameStackParamList>;
   onClose: () => void;
+  isDailyChallenge?: boolean; // pour les défis quotidiens
 };
 
 const GameEndModal = ({
@@ -40,6 +42,8 @@ const GameEndModal = ({
   gameStats,          // <-- NOUVELLE PROP
   navigation,
   onClose,
+
+  isDailyChallenge = false, // Valeur par défaut
 }: GameEndModalProps) => {
   const { theme } = useSettings();
   //pourquoi addGameResult et spendLife
@@ -96,12 +100,27 @@ const GameEndModal = ({
     let baseXP = 0;
 
     if (isVictory) {
-      // Calcul de l'XP à donner
-      baseXP = BASE_XP_REWARDS[difficulty];
+      // // Calcul de l'XP à donner
+      // baseXP = BASE_XP_REWARDS[difficulty];
 
-      // Multiples de 5 donnent un double bonus
-      if (isMultipleOf5) {
-        baseXP *= 2;
+      // // Multiples de 5 donnent un double bonus
+      // if (isMultipleOf5) {
+      //   baseXP *= 2;
+      // }
+
+      // --- LOGIQUE XP ---
+      if (isDailyChallenge) {
+        // SI C'EST UN DÉFI QUOTIDIEN : XP SPÉCIAL
+        baseXP = DailyChallengeService.BONUS_XP;
+
+        // Marquer comme complété dans le stockage
+        DailyChallengeService.completeChallenge();
+
+        Alert.alert("DÉFI RÉUSSI !", `Bravo ! Vous remportez le bonus de ${baseXP} XP !`);
+      } else {
+        // SINON : XP NORMAL (votre logique existante)
+        baseXP = BASE_XP_REWARDS[difficulty];
+        if (isMultipleOf5) baseXP *= 2;
       }
       // Application de l'XP au joueur (ce qui monte son niveau global)
       setXpEarned(baseXP);
@@ -115,7 +134,9 @@ const GameEndModal = ({
         isVictory: true,
         score: baseXP, // Xp gagné
         //  stars: stars,
-        stats: gameStats,
+        //  stats: gameStats,
+        // Ajoutez un marqueur dans les stats pour le retrouver plus tard si voulu
+        stats: { ...gameStats, isDailyChallenge },
       });
 
 
@@ -148,7 +169,7 @@ const GameEndModal = ({
       setXpEarned(0); // Pas d'XP gagné en cas de défaite
     }
 
-  }, [visible, isVictory, gameId, difficulty, level, isMultipleOf5, isMultipleOf10, score, gameStats]); //, stars,
+  }, [visible, isVictory, gameId, difficulty, level, isMultipleOf5, isMultipleOf10, score, gameStats, isDailyChallenge]); //, stars,
   // ...
 
   // --- Fonctions de Navigation ---

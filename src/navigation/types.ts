@@ -28,14 +28,16 @@ export type GameStackParamList = {
   };
   
   // Écran du jeu (Quiz, Memory, etc.)
-  Quiz: { difficulty: GameDifficulty; level: number };
-  Memory: { difficulty: GameDifficulty; level: number };
-  Snake: { difficulty: GameDifficulty; level: number };
-  NeuroPuzzle: { difficulty: GameDifficulty; level: number }; // AJOUT
-  WordScramble: { difficulty: GameDifficulty; level: number }; // AJOUT
-  MathRush: { difficulty: GameDifficulty; level: number }; // AJOUT
-  WordGuess: { difficulty: GameDifficulty; level: number }; // AJOUT
+  //Quiz: { difficulty: GameDifficulty; level: number };
+  Memory: { difficulty: GameDifficulty; level: number ;isDailyChallenge?: boolean };
+  //Snake: { difficulty: GameDifficulty; level: number };
+  NeuroPuzzle: { difficulty: GameDifficulty; level: number ; isDailyChallenge?: boolean}; // AJOUT
+  WordScramble: { difficulty: GameDifficulty; level: number ; isDailyChallenge?: boolean}; // AJOUT
+  MathRush: { difficulty: GameDifficulty; level: number ; isDailyChallenge?: boolean}; // AJOUT
+  //WordGuess: { difficulty: GameDifficulty; level: number }; // AJOUT
   // ... autres jeux
+
+  
 };
 
 // Types pour la pile racine de l'application

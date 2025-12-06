@@ -85,6 +85,8 @@ Stockage Local : Utilisez expo-sqlite pour des données structurées complexes (
 # pour compresser les images 
 Optimizilla (compresse JPEG, PNG, GIF, jusqu'à 20 images simultanément) :
 https://imagecompressor.com/fr/
+pour creer les images et vidéos 
+https://www.seaart.ai/fr
 
 Compressor.io (compresse JPEG, PNG, GIF avec haute qualité) :
 https://compressor.io

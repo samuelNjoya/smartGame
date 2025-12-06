@@ -241,15 +241,15 @@ const ProfileScreen = () => {
               </View>
             </View>
             <Switch
-              trackColor={{ false: theme.secondary, true: theme.error }}
-              thumbColor={vibrationEnabled ? theme.primary : theme.card}
+              trackColor={{ false: '#767577', true: theme.error }}
+              thumbColor={vibrationEnabled ?  '#FFFFFF' : '#F4F3F4'}
               onValueChange={handleVibrationToggle}
               value={vibrationEnabled}
             />
           </View>
 
           {/* Taille de police */}
-          <View style={[styles.settingCard, { backgroundColor: theme.card }]}>
+          {/* <View style={[styles.settingCard, { backgroundColor: theme.card }]}>
             <View style={styles.settingLeft}>
               <MaterialCommunityIcons 
                 name="format-size" 
@@ -282,7 +282,7 @@ const ProfileScreen = () => {
                 <MaterialCommunityIcons name="plus" size={16} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
-          </View>
+          </View> */}
         </Animated.View>
 
         {/* Bouton de réinitialisation */}

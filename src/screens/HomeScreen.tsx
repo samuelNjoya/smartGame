@@ -5,6 +5,7 @@ import { useSettings } from '../hooks/useSettings';
 import { usePlayer } from '../hooks/usePlayer';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { GAME_CONFIG } from '../constants/config';
+import HomeCarousel from '../components/HomeCarousel';
 
 // AJOUT : Fonction formatTime (réutilisée du modal)
 const formatTime = (ms: number) => {
@@ -80,11 +81,11 @@ const HomeScreen = () => {
         <LifeHearts />
         <View style={styles.xpContainer}>
           <Text style={[styles.xpText, { color: theme.text, fontSize: fontSize }]}>{xp}</Text>
-          <MaterialCommunityIcons name="star-four-points" size={24} color={theme.secondary} />
+          <MaterialCommunityIcons name="star-four-points" size={18} color={theme.secondary} />
         </View>
       </View>
       
-      <Text style={[styles.title, { color: theme.text, fontSize: fontSize + 8 }]}>
+      <Text style={[styles.title, { color: theme.text, fontSize: fontSize + 6 }]}>
         Bienvenue sur Smart Game
       </Text>
       
@@ -93,8 +94,9 @@ const HomeScreen = () => {
         <Text style={[styles.cardTitle, { color: theme.text }]}>Défi du Jour</Text>
         <Text style={{ color: theme.text }}>Terminez le Quiz Difficile en 1 min !</Text>
       </View>
-      
-      <Button title="Quick Play (Jeu Rapide)" color={theme.primary} onPress={() => {}} />
+     
+         {/* Intégration du carousel */}
+      <HomeCarousel />
     </View>
   );
 };
@@ -102,13 +104,13 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    padding: 15,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
   },
 heartsContainer: {
     alignItems: 'center',  // MODIFIÉ : Centré pour timer sous cœurs
@@ -126,8 +128,8 @@ heartsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.1)',
-    padding: 8,
-    borderRadius: 20,
+    padding: 5,
+    borderRadius: 15,
   },
   xpText: {
     fontWeight: 'bold',
@@ -135,13 +137,13 @@ heartsContainer: {
   },
   title: {
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 10,
     textAlign: 'center',
   },
   card: {
     padding: 20,
     borderRadius: 10,
-    marginBottom: 20,
+    //marginBottom: 10,
     elevation: 3,
   },
   cardTitle: {

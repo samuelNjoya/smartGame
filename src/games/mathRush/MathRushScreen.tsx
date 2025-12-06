@@ -39,6 +39,7 @@ interface HelpState {
 }
 
 const MathRushScreen = ({ route, navigation }: Props) => {
+    const [modalVisible, setModalVisible] = useState(false); // <--- Utilisé mais pas en rendu
     const { difficulty, level, isDailyChallenge } = route.params;
     const { theme } = useSettings();
     const { playSound, vibrate } = useSound();
@@ -91,19 +92,19 @@ const MathRushScreen = ({ route, navigation }: Props) => {
     // ✅ MODIFICATION 3: Fonction pour afficher le feedback visuel
     const showFeedback = (type: 'correct' | 'incorrect', answer: number | null) => {
         setFeedback({ type, answer });
-        
+
         feedbackAnimation.setValue(0);
         Animated.sequence([
-            Animated.timing(feedbackAnimation, { 
-                toValue: 1, 
-                duration: 300, 
-                useNativeDriver: false 
+            Animated.timing(feedbackAnimation, {
+                toValue: 1,
+                duration: 300,
+                useNativeDriver: false
             }),
             Animated.delay(1000), // Affiche pendant 1 seconde
-            Animated.timing(feedbackAnimation, { 
-                toValue: 0, 
-                duration: 200, 
-                useNativeDriver: false 
+            Animated.timing(feedbackAnimation, {
+                toValue: 0,
+                duration: 200,
+                useNativeDriver: false
             }),
         ]).start(() => {
             setFeedback({ type: null, answer: null });
@@ -170,7 +171,7 @@ const MathRushScreen = ({ route, navigation }: Props) => {
             .slice(0, 2);
 
         const wrongIndices = wrongOptions.map(item => item.index);
-        
+
         setHelpState(prev => ({
             eliminationsLeft: prev.eliminationsLeft - 1,
             eliminatedOptions: [...wrongIndices],
@@ -203,10 +204,10 @@ const MathRushScreen = ({ route, navigation }: Props) => {
             newTotalPoints += pointsGained;
             // ✅ MODIFICATION 1: Incrémenter les succès consécutifs
             newSuccèsConsécutifs += 1;
-            
+
             newFeverMode = false;
             if (feverTimerRef.current) clearTimeout(feverTimerRef.current);
-            
+
             // ✅ MODIFICATION 3: Afficher feedback correct
             showFeedback('correct', answer);
         } else {
@@ -217,7 +218,7 @@ const MathRushScreen = ({ route, navigation }: Props) => {
             newSuccèsConsécutifs = 0;
             newFeverMode = false;
             if (feverTimerRef.current) clearTimeout(feverTimerRef.current);
-            
+
             // ✅ MODIFICATION 3: Afficher feedback incorrect avec la bonne réponse
             showFeedback('incorrect', answer);
         }
@@ -239,7 +240,7 @@ const MathRushScreen = ({ route, navigation }: Props) => {
 
         if (newErrors >= 3) {
             setCurrentState(prev => ({ ...prev, isGameOver: true, hasWonLevel: false }));
-          //  spendLife(1);
+            //  spendLife(1);
             return;
         }
 
@@ -259,13 +260,28 @@ const MathRushScreen = ({ route, navigation }: Props) => {
 
         if (isVictory) {
             addXP(totalXp);
-        } 
+        }
         // else {
         //     spendLife(1);
         // }
 
         setCurrentState(prev => ({ ...prev, isGameOver: true, hasWonLevel: isVictory }));
+        // 2. Afficher le modal (MAINTENANT que le jeu est marqué comme terminé)
+        setModalVisible(true);
     };
+
+    // NOUVEAU: Fonction pour fermer le modal et réinitialiser l'état du jeu
+const handleCloseModal = () => {
+    // 1. Cacher le modal
+    setModalVisible(false);
+
+    // 2. IMPORTANT: Réinitialiser isGameOver pour permettre le retour
+    // Si nous ne faisons pas cela, l'écran reste en mode "isGameOver=true"
+    setCurrentState(prev => ({ ...prev, isGameOver: false }));
+
+    // Si le joueur veut rejouer/quitter le niveau, c'est le MODAL qui gère la navigation
+    // C'est le rôle du modal de naviguer.
+};
 
     // ⭐⭐⭐ USEFFECT APRÈS TOUTES LES FONCTIONS ⭐⭐⭐
 
@@ -301,10 +317,12 @@ const MathRushScreen = ({ route, navigation }: Props) => {
 
     const currentProblem = problems[currentIndex];
 
+    // if (modalVisible) {
     if (currentState.isGameOver) {
         return (
             <GameEndModal
-                visible={currentState.isGameOver}
+               visible={currentState.isGameOver} 
+              // visible={modalVisible}
                 gameId="MathRush"
                 difficulty={difficulty}
                 level={level}
@@ -320,6 +338,8 @@ const MathRushScreen = ({ route, navigation }: Props) => {
                         difficulty
                     });
                 }}
+                // MODIFICATION CLÉ 1 : Utiliser la nouvelle fonction pour réinitialiser
+            // onClose={handleCloseModal}
             />
         );
     }
@@ -357,12 +377,12 @@ const MathRushScreen = ({ route, navigation }: Props) => {
 
             {/* ✅ MODIFICATION 3: Overlay de feedback visuel */}
             {feedback.type && (
-                <Animated.View 
+                <Animated.View
                     style={[
                         styles.feedbackOverlay,
-                        { 
+                        {
                             backgroundColor: feedback.type === 'correct' ? 'rgba(76, 175, 80, 0.9)' : 'rgba(244, 67, 54, 0.9)',
-                            opacity: feedbackOpacity 
+                            opacity: feedbackOpacity
                         }
                     ]}
                 >
@@ -371,10 +391,10 @@ const MathRushScreen = ({ route, navigation }: Props) => {
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ type: 'spring' }}
                     >
-                        <MaterialCommunityIcons 
-                            name={feedback.type === 'correct' ? 'check-circle' : 'close-circle'} 
-                            size={80} 
-                            color="#FFFFFF" 
+                        <MaterialCommunityIcons
+                            name={feedback.type === 'correct' ? 'check-circle' : 'close-circle'}
+                            size={80}
+                            color="#FFFFFF"
                         />
                         <Text style={styles.feedbackText}>
                             {feedback.type === 'correct' ? 'Correct ! 🎉' : 'Faux ! 😞'}
@@ -413,18 +433,18 @@ const MathRushScreen = ({ route, navigation }: Props) => {
             <TouchableOpacity
                 style={[
                     styles.helpButton,
-                    { 
+                    {
                         backgroundColor: helpState.eliminationsLeft > 0 ? theme.primary : '#CCCCCC',
-                        opacity: helpState.eliminationsLeft > 0 ? 1 : 0.5 
+                        opacity: helpState.eliminationsLeft > 0 ? 1 : 0.5
                     }
                 ]}
                 onPress={useEliminationHelp}
                 disabled={helpState.eliminationsLeft === 0}
             >
-                <MaterialCommunityIcons 
-                    name="filter-remove" 
-                    size={24} 
-                    color="#FFFFFF" 
+                <MaterialCommunityIcons
+                    name="filter-remove"
+                    size={24}
+                    color="#FFFFFF"
                 />
                 <Text style={styles.helpButtonText}>
                     Éliminer 2 mauvaises réponses ({helpState.eliminationsLeft})
@@ -444,34 +464,34 @@ const MathRushScreen = ({ route, navigation }: Props) => {
                     {currentProblem.options.map((option, index) => {
                         // ✅ MODIFICATION 2: Vérifier si cette option est éliminée
                         const isEliminated = helpState.eliminatedOptions.includes(index);
-                        
+
                         return (
                             <MotiView
                                 key={option}
                                 from={{ opacity: 0, translateY: 50 }}
-                                animate={{ 
+                                animate={{
                                     opacity: isEliminated ? 0.3 : 1,
-                                    translateY: 0 
+                                    translateY: 0
                                 }}
                                 exit={{ opacity: 0, scale: 0.5 }}
                                 transition={{ type: 'timing', duration: 300, delay: index * 50 }}
                             >
                                 <TouchableOpacity
                                     style={[
-                                        styles.optionButton, 
-                                        { 
+                                        styles.optionButton,
+                                        {
                                             backgroundColor: isEliminated ? '#666666' : theme.primary,
-                                            opacity: isEliminated ? 0.5 : 1 
+                                            opacity: isEliminated ? 0.5 : 1
                                         }
                                     ]}
                                     onPress={() => !isEliminated && handleAnswer(option)}
                                     disabled={isEliminated}
                                 >
                                     {isEliminated && (
-                                        <MaterialCommunityIcons 
-                                            name="close" 
-                                            size={24} 
-                                            color="#FFFFFF" 
+                                        <MaterialCommunityIcons
+                                            name="close"
+                                            size={24}
+                                            color="#FFFFFF"
                                             style={styles.eliminatedIcon}
                                         />
                                     )}

@@ -48,12 +48,12 @@ const GameStack = () => {
       
       {/* JEUX COMPLETS */}
       <Stack.Screen name="Memory" component={MemoryGameScreen} options={{ title: 'Jeu de Mémoire' }} />
-      <Stack.Screen name="Quiz" component={QuizGameScreen} options={{ title: 'Quiz Culture' }} />
-      <Stack.Screen name="Snake" component={SnakeGameScreen} options={{ title: 'Snake' }} />
+      {/* <Stack.Screen name="Quiz" component={QuizGameScreen} options={{ title: 'Quiz Culture' }} /> */}
+      {/* <Stack.Screen name="Snake" component={SnakeGameScreen} options={{ title: 'Snake' }} /> */}
       <Stack.Screen name="NeuroPuzzle" component={NeuroPuzzleScreen} options={{ title: 'NeuroPuzzle' }} />
       <Stack.Screen name="WordScramble" component={WordScrambleScreen} options={{ title: 'Mots Mêlés' }} />
       <Stack.Screen name="MathRush" component={MathRushScreen} options={{ title: 'Calcul Express' }}/>
-      <Stack.Screen name="WordGuess" component={WordGuessScreen} options={{ title: 'Dévine le Mot' }}/>
+      {/* <Stack.Screen name="WordGuess" component={WordGuessScreen} options={{ title: 'Dévine le Mot' }}/> */}
       
       {/* <Stack.Screen name="Sudoku" component={SudokuScreen} /> 
       <Stack.Screen name="TicTacToe" component={TicTacToeScreen} /> 

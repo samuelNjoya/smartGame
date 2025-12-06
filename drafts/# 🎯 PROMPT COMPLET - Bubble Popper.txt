@@ -22,3 +22,39 @@ L'application utilise React Native Expo avec une attention particulière portée
 Le scoring combine plusieurs facteurs : la valeur de base de chaque bulle (dépendant de sa taille et de sa vitesse), un multiplicateur qui s'incrémente avec les combos (bulles éclatées successivement sans en manquer), et des bonus pour l'éclatement de bulles spéciales ou la complétion de défis. Un tableau des meilleurs scores est maintenu pour chaque niveau de difficulté, avec des récompenses visuelles (badges, trophées) débloquées pour des accomplishments spécifiques. Le système de progression à long terme permet de débloquer de nouveaux thèmes visuels, des effets de particules alternatifs, et des types de bulles exclusives through l'accumulation de pièces virtuelles gagnées en jouant.
 
 **Ce prompt décrit les spécifications complètes pour développer Bubble Popper, un jeu mobile addictif alliant réflexes et stratégie, fonctionnant entièrement hors ligne et offrant une expérience de jeu riche avec progression adaptative, power-ups variés et système de récompenses engageant.**
+
+
+ {/* Pied du modal (Navigation) */}
+            <View style={styles.navContainer}>
+              {/* {showPrevButton && (
+                <Button 
+                  title="Précédent" 
+                  onPress={handlePrev} 
+                  color={theme.accent}
+                />
+              )} */}
+              <Button
+                title="Rejouer"
+                onPress={handleReplay}
+                color={theme.primary}
+              />
+              {showNextButton && isVictory && (
+                <Button
+                  title="Suivant"
+                  onPress={handleNext}
+                  color={theme.success}
+                  disabled={!isNewLevelUnlocked && level >= maxLevels}
+                />
+              )}
+              <Button
+                title="Quitter"
+                onPress={handleQuit}
+                color={theme.secondary}
+              />
+              {!showNextButton && <Button title="Liste des niveaux" onPress={onClose} color={theme.text} />}
+            </View>
+
+
+
+
+            pb de navigation a resourdre 

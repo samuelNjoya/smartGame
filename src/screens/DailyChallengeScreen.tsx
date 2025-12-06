@@ -7,7 +7,7 @@ import { MotiView } from 'moti';
 
 import { useSettings } from '../hooks/useSettings';
 import { usePlayer } from '../hooks/usePlayer';
-import DailyChallengeService, { DailyChallengeConfig } from '../services/DailyChallengeService';
+import DailyChallengeService, { ChallengeStatus, DailyChallengeConfig } from '../services/DailyChallengeService';
 import { GameStackParamList } from '../navigation/types';
 
 // Calcul du temps restant jusqu'à minuit
@@ -30,9 +30,9 @@ const DailyChallengeScreen = () => {
   const { theme, fontSize } = useSettings();
   const { lives, xp } = usePlayer();
   const navigation = useNavigation<NativeStackNavigationProp<GameStackParamList>>();
-  
+
   const [challenge, setChallenge] = useState<DailyChallengeConfig | null>(null);
-  const [status, setStatus] = useState<'loading' | 'pending' | 'completed'>('loading');
+  const [status, setStatus] = useState<ChallengeStatus | 'loading'>('loading');
   const [timeLeft, setTimeLeft] = useState(getTimeUntilMidnight());
 
   // Recharger le statut à chaque fois qu'on revient sur l'écran
@@ -41,7 +41,8 @@ const DailyChallengeScreen = () => {
       const loadData = async () => {
         const todayChallenge = DailyChallengeService.getChallengeForToday();
         setChallenge(todayChallenge);
-        
+
+        // Le type de retour de getStatus est maintenant ChallengeStatus
         const currentStatus = await DailyChallengeService.getStatus();
         setStatus(currentStatus);
       };
@@ -60,16 +61,26 @@ const DailyChallengeScreen = () => {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
-  
+
   const handlePlayChallenge = () => {
     if (!challenge) return;
-    
+
     // Navigation vers le jeu spécifique avec le flag isDailyChallenge
     // @ts-ignore - TypeScript peut être strict ici mais les types sont bons
-    navigation.navigate(challenge.gameId, { 
-      difficulty: challenge.difficulty, 
-      level: challenge.targetLevel,
-      isDailyChallenge: true // FLAG IMPORTANT
+
+    // navigation.navigate(challenge.gameId, { 
+    //   difficulty: challenge.difficulty, 
+    //   level: challenge.targetLevel,
+    //   isDailyChallenge: true // FLAG IMPORTANT
+    // });
+
+    navigation.navigate('Games', {
+      screen: challenge.gameId, // ex: 'MathRush'
+      params: {
+        difficulty: challenge.difficulty,
+        level: challenge.targetLevel,
+        isDailyChallenge: true
+      }
     });
   };
 
@@ -81,69 +92,85 @@ const DailyChallengeScreen = () => {
     );
   }
 
-  const isCompleted = status === 'completed';
+  // NOUVELLES VARIABLES DÉFINISSANT L'ÉTAT DE FIN
+  const isPlayed = status === 'won' || status === 'lost';
+  const hasWon = status === 'won'; // True si on a gagné, False si on a perdu ou pending
+
+
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <Text style={[styles.title, { color: theme.text, fontSize: fontSize + 8 }]}>
         Défi du Jour
       </Text>
-      
+
       <MotiView
         from={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ type: 'spring' }}
         style={[
-          styles.card, 
-          { backgroundColor: isCompleted ? theme.success + '20' : theme.card, borderColor: isCompleted ? theme.success : 'transparent', borderWidth: isCompleted ? 2 : 0 }
+          styles.card,
+          {
+            // La bordure dépend du résultat !
+            backgroundColor: isPlayed ? (hasWon ? theme.success + '20' : theme.error + '20') : theme.card,
+            borderColor: isPlayed ? (hasWon ? theme.success : theme.error) : 'transparent',
+            borderWidth: isPlayed ? 2 : 0
+          }
         ]}
       >
-        {/* Icône Dynamique du Jeu */}
-        <MaterialCommunityIcons 
-          name={isCompleted ? "check-decagram" : challenge.icon as any} 
-          size={100} 
-          color={isCompleted ? theme.success : theme.primary} 
+        {/* Icône Dynamique du Jeu (CORRECTION DE L'ICÔNE) */}
+        <MaterialCommunityIcons
+          name={isPlayed ? (hasWon ? "check-decagram" : "close-octagon") : challenge.icon as any}
+          size={100}
+          color={isPlayed ? (hasWon ? theme.success : theme.error) : theme.primary}
           style={{ marginBottom: 20 }}
         />
-        
+
         <Text style={[styles.challengeTitle, { color: theme.text }]}>
-          {isCompleted ? "Défi Accompli !" : challenge.gameName}
+          {/* MESSAGE EN FONCTION DU RÉSULTAT (CORRECTION DU MESSAGE) */}
+          {isPlayed ? (hasWon ? "Défi Accompli !" : "Défi Échoué") : challenge.gameName}
         </Text>
-        
+
         <Text style={[styles.challengeDesc, { color: theme.secondary, fontSize: fontSize }]}>
-          {isCompleted 
-            ? "Revenez demain pour un nouveau challenge." 
+          {isPlayed
+            ? (hasWon
+              ? "Félicitations ! Revenez demain pour un nouveau challenge."
+              : "Dommage ! Vous pourrez retenter votre chance demain.")
             : `Terminez le niveau ${challenge.targetLevel} en mode **${challenge.difficulty.toUpperCase()}** pour gagner ${challenge.bonusXp} XP !`
           }
         </Text>
-        
-        {!isCompleted && (
+
+        {/* On affiche le timer seulement si le temps n'est pas écoulé ou si l'on est en attente */}
+        {timeLeft > 0 && (
           <View style={styles.timerBox}>
             <MaterialCommunityIcons name="clock-outline" size={20} color={theme.text} />
             <Text style={[styles.timerText, { color: theme.text }]}>
-              Expire dans : {formatTime(timeLeft)}
+              {/* DÉBUT DE LA CORRECTION : Changer le libellé */}
+              {isPlayed ? "Prochain défi dans : " : "Expire dans : "}
+              {formatTime(timeLeft)}
             </Text>
           </View>
         )}
-        
+
         <View style={{ width: '100%', marginTop: 20 }}>
+         
           <Button
-            title={isCompleted ? "À demain !" : "Relever le défi"}
+            title={isPlayed ? "À demain !" : "Relever le défi"}
             onPress={handlePlayChallenge}
-            color={isCompleted ? theme.secondary : theme.primary}
-            disabled={isCompleted || timeLeft <= 0}
+            color={isPlayed ? theme.secondary : theme.primary}
+            disabled={isPlayed || timeLeft <= 0} // Désactiver si joué ou temps écoulé
           />
         </View>
       </MotiView>
-      
+
       <View style={styles.statsContainer}>
         <View style={styles.statBox}>
-            <MaterialCommunityIcons name="heart" size={24} color={theme.error} />
-            <Text style={[styles.statsText, { color: theme.text }]}>{lives}</Text>
+          <MaterialCommunityIcons name="heart" size={24} color={theme.error} />
+          <Text style={[styles.statsText, { color: theme.text }]}>{lives}</Text>
         </View>
         <View style={styles.statBox}>
-            <MaterialCommunityIcons name="star" size={24} color={theme.accent} />
-            <Text style={[styles.statsText, { color: theme.text }]}>{xp} XP</Text>
+          <MaterialCommunityIcons name="star" size={24} color={theme.accent} />
+          <Text style={[styles.statsText, { color: theme.text }]}>{xp} XP</Text>
         </View>
       </View>
     </View>
@@ -205,8 +232,8 @@ const styles = StyleSheet.create({
     width: '80%',
   },
   statBox: {
-      alignItems: 'center',
-      gap: 5
+    alignItems: 'center',
+    gap: 5
   },
   statsText: {
     fontSize: 18,

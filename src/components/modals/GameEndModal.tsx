@@ -57,34 +57,6 @@ const GameEndModal = ({
   const isMultipleOf10 = level % 10 === 0;
   const maxLevels = MAX_LEVELS[difficulty];
 
-  // --- Logique de Récompense et Progression ---
-  // React.useEffect(() => {
-  //   if (!visible || !isVictory) return;
-
-  //   let baseXP = BASE_XP_REWARDS[difficulty];
-
-  //   // Multiples de 5 donnent un double bonus
-  //   if (isMultipleOf5) {
-  //     baseXP *= 2;
-  //   }
-
-  //   setXpEarned(baseXP);
-  //   addXP(baseXP);
-
-  //   // Vérifier et enregistrer la progression
-  //   const checkProgression = async () => {
-  //     const unlocked = await ProgressionService.saveLevelCompletion(gameId, difficulty, level);
-  //     setIsNewLevelUnlocked(unlocked);
-
-  //     // Multiples de 10 déclenchent le modal de récompense aléatoire
-  //     if (isMultipleOf10) {
-  //       // Afficher le modal aléatoire après le gain initial
-  //       setTimeout(() => setShowRandomRewardModal(true), 500); 
-  //     }
-  //   };
-
-  //   checkProgression();
-  // }, [visible, isVictory, gameId, difficulty, level, isMultipleOf5, isMultipleOf10]);
 
   // --- Logique de Récompense et Progression ---
   React.useEffect(() => {
@@ -99,6 +71,11 @@ const GameEndModal = ({
 
     let baseXP = 0;
 
+    // Si c'est un Défi Quotidien, marquer le défi comme joué immédiatement
+    if (isDailyChallenge) {
+      DailyChallengeService.completeChallenge(isVictory); // <-- CORRECTION 3: Joué, qu'on gagne ou perde isVictory
+    }
+
     if (isVictory) {
       // // Calcul de l'XP à donner
       // baseXP = BASE_XP_REWARDS[difficulty];
@@ -109,18 +86,37 @@ const GameEndModal = ({
       // }
 
       // --- LOGIQUE XP ---
+      // if (isDailyChallenge) {
+      //   // SI C'EST UN DÉFI QUOTIDIEN : XP SPÉCIAL
+      //   baseXP = DailyChallengeService.BONUS_XP;
+      //   // Marquer comme complété dans le stockage
+      // //  DailyChallengeService.completeChallenge(); //pas d'appel ici
+
+      //   // Alert.alert("DÉFI RÉUSSI !", `Bravo ! Vous remportez le bonus de ${baseXP} XP !`);
+      // } else {
+      //   // SINON : XP NORMAL (votre logique existante)
+      //   baseXP = BASE_XP_REWARDS[difficulty];
+      //   if (isMultipleOf5) baseXP *= 2;
+      // }
+
       if (isDailyChallenge) {
-        // SI C'EST UN DÉFI QUOTIDIEN : XP SPÉCIAL
         baseXP = DailyChallengeService.BONUS_XP;
-
-        // Marquer comme complété dans le stockage
-        DailyChallengeService.completeChallenge();
-
-        Alert.alert("DÉFI RÉUSSI !", `Bravo ! Vous remportez le bonus de ${baseXP} XP !`);
+        // Pas d'appel à ProgressionService.saveLevelCompletion() ici (CORRECTION 2)
       } else {
-        // SINON : XP NORMAL (votre logique existante)
         baseXP = BASE_XP_REWARDS[difficulty];
         if (isMultipleOf5) baseXP *= 2;
+
+        // Vérifier et enregistrer la progression (Uniquement en mode CARRIÈRE)
+        const checkProgression = async () => {
+          // CORRECTION 2: ON N'APPELE CECI QUE SI CE N'EST PAS UN DÉFI
+          const unlocked = await ProgressionService.saveLevelCompletion(gameId, difficulty, level);
+          setIsNewLevelUnlocked(unlocked);
+
+          if (isMultipleOf10) {
+            setTimeout(() => setShowRandomRewardModal(true), 500);
+          }
+        };
+        checkProgression();
       }
       // Application de l'XP au joueur (ce qui monte son niveau global)
       setXpEarned(baseXP);
@@ -141,16 +137,16 @@ const GameEndModal = ({
 
 
       // Vérifier et enregistrer la progression
-      const checkProgression = async () => {
-        const unlocked = await ProgressionService.saveLevelCompletion(gameId, difficulty, level); // , stars <-- MODIFIÉ pour inclure les étoiles
-        setIsNewLevelUnlocked(unlocked);
+      // const checkProgression = async () => {
+      //   const unlocked = await ProgressionService.saveLevelCompletion(gameId, difficulty, level); // , stars <-- MODIFIÉ pour inclure les étoiles
+      //   setIsNewLevelUnlocked(unlocked);
 
-        // Multiples de 10 déclenchent le modal de récompense aléatoire
-        if (isMultipleOf10) {
-          setTimeout(() => setShowRandomRewardModal(true), 500);
-        }
-      };
-      checkProgression();
+      //   // Multiples de 10 déclenchent le modal de récompense aléatoire
+      //   if (isMultipleOf10) {
+      //     setTimeout(() => setShowRandomRewardModal(true), 500);
+      //   }
+      // };
+      // checkProgression();
 
     } else {
       // --- ENREGISTREMENT DANS LE CONTEXTE (Défaite) ---
@@ -192,11 +188,39 @@ const GameEndModal = ({
     navigation.popToTop();
     navigation.navigate('LevelSelect', { gameId, gameName: gameId, difficulty });
   };
+//   const handleQuit = () => {
+//     onClose(); // Ferme le modal (et réinitialise l'état isGameOver dans MathRushScreen)
+//     // Tente de revenir à l'écran de sélection de niveau/jeu
+//     navigation.navigate('LevelSelect' as any); 
+//     // Si LevelSelect n'est pas l'écran parent direct, vous devrez peut-être ajuster:
+//     // navigation.popToTop(); 
+//     // navigation.navigate('LevelSelect', { gameId, gameName: gameId, difficulty }); 
+// };
 
+  // NOUVELLE FONCTION de sortie pour le Défi
+  // const handleChallengeQuit = () => {
+  //   onClose();
+  //   navigation.navigate('DailyChallenge' as any);
+  // };
+
+  // NOUVELLE FONCTION de sortie pour le Défi (CORRECTION 1)
+const handleChallengeQuit = () => {
+    onClose(); // 1. Fermer le modal
+    // 2. Tenter de revenir en arrière dans la pile actuelle (sortir du jeu)
+    // Cela fonctionne si le jeu est l'écran au sommet de la pile GameStack.
+   navigation.goBack(); 
+    // 3. Naviguer vers l'écran DailyChallenge (le tab)
+    // On utilise la navigation du tab (MainTabs), qui est accessible depuis n'importe quel enfant.
+    // Assurez-vous que le nom de l'onglet est bien 'DailyChallenge' dans MainTabs.tsx
+    navigation.navigate('DailyChallenge' as any); 
+};
   // On ne peut pas revenir avant le niveau 1
   //const showPrevButton = level > 1; 
   // On ne peut pas aller au-delà du dernier niveau
   const showNextButton = level < maxLevels;
+
+  const isChallengeFinished = isVictory && isDailyChallenge;
+  const isChallengeFailed = !isVictory && isDailyChallenge;
 
 
   return (
@@ -211,8 +235,11 @@ const GameEndModal = ({
               size={60}
               color={isVictory ? theme.success : theme.error}
             />
-            <Text style={[styles.title, { color: theme.text }]}>
+            {/* <Text style={[styles.title, { color: theme.text }]}>
               {isVictory ? "NIVEAU TERMINÉ !" : "PARTIE TERMINÉE"}
+            </Text> */}
+            <Text style={[styles.title, { color: theme.text }]}>
+              {isChallengeFinished ? "DÉFI ACCOMPLI !" : isChallengeFailed ? "DÉFI ÉCHOUÉ" : isVictory ? "NIVEAU TERMINÉ !" : "PARTIE TERMINÉE"}
             </Text>
 
             {/* Corps du modal (Récompenses) */}
@@ -225,7 +252,13 @@ const GameEndModal = ({
                 <Text style={[styles.rewardText, { color: theme.text }]}>
                   {`+${xpEarned} XP`}
                 </Text>
-                {isNewLevelUnlocked && (
+                {isChallengeFinished && (
+                  // CORRECTION 3 (MESSAGE DE FIN)
+                  <Text style={[styles.unlockText, { color: theme.success }]}>
+                    ✅ Défi réussi ! Reviens demain pour un nouveau challenge.
+                  </Text>
+                )}
+                {!isDailyChallenge && isNewLevelUnlocked && (
                   <Text style={[styles.unlockText, { color: theme.success }]}>
                     ✅ Niveau {level + 1} déverrouillé !
                   </Text>
@@ -237,41 +270,52 @@ const GameEndModal = ({
                 )}
               </View>
             ) : (
+              // <Text style={[styles.defeatText, { color: theme.text }]}>
+              //   Vous avez échoué. Réessayez pour progresser !
+              // </Text>
               <Text style={[styles.defeatText, { color: theme.text }]}>
-                Vous avez échoué. Réessayez pour progresser !
+                {isChallengeFailed ?
+                  "Tu as échoué le Défi du Jour. Réessaye demain !" :
+                  "Vous avez échoué. Réessayez pour progresser !"
+                }
               </Text>
             )}
 
-            {/* Pied du modal (Navigation) */}
+
+            {/* Pied du modal (Navigation - CORRECTION 2 & 4) */}
             <View style={styles.navContainer}>
-              {/* {showPrevButton && (
-                <Button 
-                  title="Précédent" 
-                  onPress={handlePrev} 
-                  color={theme.accent}
-                />
-              )} */}
-              <Button
-                title="Rejouer"
-                onPress={handleReplay}
-                color={theme.primary}
-              />
-              {showNextButton && isVictory && (
+
+              {/* Boutons de Carrière (UNIQUEMENT si ce n'est PAS un défi quotidien) */}
+              {!isDailyChallenge ? (
+                <>
+                  <Button
+                    title="Rejouer"
+                    onPress={handleReplay}
+                    color={theme.primary}
+                  />
+                  {showNextButton && isVictory && (
+                    <Button
+                      title="Suivant"
+                      onPress={handleNext}
+                      color={theme.success}
+                      disabled={!isNewLevelUnlocked && level >= maxLevels}
+                    />
+                  )}
+                  <Button
+                    title="Quitter"
+                    onPress={handleQuit} // Quitter vers LevelSelect
+                    color={theme.secondary}
+                  />
+                </>
+              ) : (
+                // Bouton Unique pour le Défi Quotidien
                 <Button
-                  title="Suivant"
-                  onPress={handleNext}
-                  color={theme.success}
-                  disabled={!isNewLevelUnlocked && level >= maxLevels}
+                  title="Terminer et Quitter"
+                  onPress={handleChallengeQuit} // Quitter vers DailyChallengeScreen
+                  color={theme.secondary}
                 />
               )}
-              <Button
-                title="Quitter"
-                onPress={handleQuit}
-                color={theme.secondary}
-              />
-              {!showNextButton && <Button title="Liste des niveaux" onPress={onClose} color={theme.text} />}
             </View>
-
           </View>
         </View>
       </Modal>

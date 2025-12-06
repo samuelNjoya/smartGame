@@ -13,6 +13,9 @@ export interface DailyChallengeConfig {
   icon: string;
 }
 
+// Type de statut mis à jour
+export type ChallengeStatus = 'pending' | 'won' | 'lost';
+
 // Génère une configuration déterministe basée sur la date
 // (Tout le monde aura le même défi le même jour)
 const getChallengeForDate = (date: Date): DailyChallengeConfig => {
@@ -50,21 +53,45 @@ const getTodayStatusKey = () => {
   return `${DAILY_STATUS_KEY_PREFIX}${dateString}`;
 };
 
-const getStatus = async (): Promise<'pending' | 'completed'> => {
+// const getStatus = async (): Promise<'pending' | 'completed'> => {
+//   const key = getTodayStatusKey();
+//   const status = await StorageService.get(key);
+//   return status === 'completed' ? 'completed' : 'pending';
+// };
+
+const getStatus = async (): Promise<ChallengeStatus> => {
   const key = getTodayStatusKey();
   const status = await StorageService.get(key);
-  return status === 'completed' ? 'completed' : 'pending';
+  
+  // Retourne le statut stocké, ou 'pending' par défaut
+  if (status === 'won' || status === 'lost') {
+      return status;
+  }
+  return 'pending'; 
 };
 
-const completeChallenge = async () => {
+// const completeChallenge = async () => {
+//   const key = getTodayStatusKey();
+//   await StorageService.set(key, 'completed');
+// };
+
+// Fonction de complétion mise à jour : prend un booléen 'isVictory'
+const completeChallenge = async (isVictory: boolean) => {
   const key = getTodayStatusKey();
-  await StorageService.set(key, 'completed');
+  const result = isVictory ? 'won' : 'lost'; // Enregistre le résultat
+  await StorageService.set(key, result);
 };
 
+// const DailyChallengeService = {
+//   getChallengeForToday: () => getChallengeForDate(new Date()),
+//   getStatus,
+//   completeChallenge,
+//   BONUS_XP
+// };
 const DailyChallengeService = {
   getChallengeForToday: () => getChallengeForDate(new Date()),
-  getStatus,
-  completeChallenge,
+  getStatus, // Type de retour : ChallengeStatus
+  completeChallenge, // Nouvelle signature
   BONUS_XP
 };
 

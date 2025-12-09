@@ -11,13 +11,16 @@ import { GameStackParamList } from '../../navigation/types';
 import { NEURO_CONFIG, NeuroDifficulty } from '../../constants/neuroPuzzleConfig';
 import { generateNeuroGrid, NeuroCell, generateLevelParams } from './neuroPuzzle.logic';
 import GameEndModal from '../../components/modals/GameEndModal';
+import GameScreenWrapper from '../../components/games/GameScreenWrapper'; // ⭐⭐⭐ AJOUT ⭐⭐⭐
+import { useDailyChallenge } from '../../hooks/useDailyChallenge'; // ⭐⭐⭐ AJOUT ⭐⭐⭐
 
 type Props = NativeStackScreenProps<GameStackParamList, 'NeuroPuzzle'>;
 
 const { width } = Dimensions.get('window');
 
 const NeuroPuzzleScreen = ({ route, navigation }: Props) => {
-    const { difficulty, level, isDailyChallenge } = route.params;
+    const { difficulty, level } = route.params;
+    const { isDailyChallenge } = useDailyChallenge(); // ⭐⭐⭐ UTILISEZ LE HOOK ⭐⭐⭐
     const { theme } = useSettings();
     const { playSound, vibrate } = useSound();
 
@@ -33,14 +36,14 @@ const NeuroPuzzleScreen = ({ route, navigation }: Props) => {
     const [hasWon, setHasWon] = useState(false);
 
     // Ajoutez un état pour les Jokers
-    const [jokersLeft, setJokersLeft] = useState(3); // 3 jokers par partie
-    const [isPeeking, setIsPeeking] = useState(false); // Est en train de regarder ?
+    const [jokersLeft, setJokersLeft] = useState(3);
+    const [isPeeking, setIsPeeking] = useState(false);
 
     // Config actuelle
     const config = NEURO_CONFIG[difficulty as NeuroDifficulty];
-    const cellSize = (width - 60) / config.gridSize; // Calcul dynamique de la taille des cases
+    const cellSize = (width - 60) / config.gridSize;
 
-    // NOUVEAU : État pour la progression fluide
+    // État pour la progression fluide
     const [smoothProgress, setSmoothProgress] = useState(1);
     const animationRef = useRef<number>(null);
     const startTimeRef = useRef<number | null>(null);
@@ -57,22 +60,20 @@ const NeuroPuzzleScreen = ({ route, navigation }: Props) => {
         setGrid(newGrid);
         setInitialTime(params.memorizationTime);
         setTimeLeft(params.memorizationTime);
-        setSmoothProgress(1); // Reset progression ← NOUVEAU
+        setSmoothProgress(1);
         setPhase('memorize');
         setIsGameOver(false);
         setHasWon(false);
-        // Sélectionner la première couleur par défaut
         setSelectedPaletteColor(config.availableColors[0]);
-        setJokersLeft(3); // Reset jokers (ou garder entre les niveaux si vous préférez plus dur)
+        setJokersLeft(3);
         setIsPeeking(false);
 
-        // Arrêter toute animation en cours ← NOUVEAU
         if (animationRef.current) {
             cancelAnimationFrame(animationRef.current);
         }
     };
 
-    // Animation fluide ← FONCTION COMPLÈTEMENT NOUVELLE
+    // Animation fluide du timer
     const animateProgress = (timestamp: number) => {
         if (!startTimeRef.current) {
             startTimeRef.current = timestamp;
@@ -84,14 +85,12 @@ const NeuroPuzzleScreen = ({ route, navigation }: Props) => {
 
         setSmoothProgress(progress);
 
-        // Mettre à jour timeLeft pour l'affichage texte
         const remainingSeconds = Math.ceil(progress * initialTime);
         setTimeLeft(remainingSeconds);
 
         if (progress > 0) {
             animationRef.current = requestAnimationFrame(animateProgress);
         } else {
-            // Fin du temps
             setPhase('input');
             playSound('click');
             setTimeLeft(0);
@@ -104,31 +103,13 @@ const NeuroPuzzleScreen = ({ route, navigation }: Props) => {
         if (jokersLeft > 0 && phase === 'input' && !isPeeking) {
             setJokersLeft(prev => prev - 1);
             setIsPeeking(true);
-            // Montrer le pattern pendant 2.0 secondes
             setTimeout(() => {
                 setIsPeeking(false);
             }, 2000);
         }
     };
 
-    // Timer de mémorisation
-    // useEffect(() => {
-    //     if (phase === 'memorize' && timeLeft > 0) {
-    //         const timer = setInterval(() => {
-    //             setTimeLeft((prev) => {
-    //                 if (prev <= 1) {
-    //                     clearInterval(timer);
-    //                     setPhase('input'); // Passage automatique à la phase input
-    //                     playSound('click'); // Petit son de transition
-    //                     return 0;
-    //                 }
-    //                 return prev - 1;
-    //             });
-    //         }, 1000);
-    //         return () => clearInterval(timer);
-    //     }
-    // }, [phase, timeLeft]);
-    // Timer de mémorisation avec animation fluide ← COMPLÈTEMENT REMPLACÉ
+    // Timer de mémorisation avec animation fluide
     useEffect(() => {
         if (phase === 'memorize' && initialTime > 0) {
             startTimeRef.current = undefined;
@@ -141,6 +122,7 @@ const NeuroPuzzleScreen = ({ route, navigation }: Props) => {
             };
         }
     }, [phase, initialTime]);
+
     // Gestion du clic sur une case
     const handleCellPress = (index: number) => {
         if (phase !== 'input' || isGameOver) return;
@@ -151,8 +133,6 @@ const NeuroPuzzleScreen = ({ route, navigation }: Props) => {
 
         setGrid((prevGrid) => {
             const newGrid = [...prevGrid];
-            // Si on clique avec la même couleur, on efface (toggle)
-            // Sinon on applique la couleur sélectionnée
             if (newGrid[index].userColor === selectedPaletteColor) {
                 newGrid[index].userColor = null;
             } else {
@@ -164,16 +144,13 @@ const NeuroPuzzleScreen = ({ route, navigation }: Props) => {
 
     // Validation du résultat
     const handleValidate = () => {
-        // Vérifier si la grille utilisateur correspond à la cible
         const isCorrect = grid.every((cell) => cell.userColor === cell.targetColor);
 
         if (isCorrect) {
-            // VICTOIRE
             playSound('win');
             vibrate('success');
             setHasWon(true);
         } else {
-            // DÉFAITE
             playSound('lose');
             vibrate('error');
             setHasWon(false);
@@ -183,187 +160,229 @@ const NeuroPuzzleScreen = ({ route, navigation }: Props) => {
         setIsGameOver(true);
     };
 
-    return (
-        <View style={[styles.container, { backgroundColor: theme.background }]}>
-            {/* HEADER & INFO */}
-            <Text style={[styles.title, { color: theme.text }]}>
-                NeuroPuzzle - Niv. {level}
-            </Text>
-
-            {phase === 'memorize' ? (
-                <View style={styles.infoContainer}>
-                    <Text style={[styles.phaseText, { color: theme.primary }]}>Mémorisez le motif !</Text>
-                    <Text style={[styles.timerText, { color: theme.error }]}>{Math.ceil(timeLeft)}s</Text>
-                    {/* <Text style={[styles.timerText, { color: theme.error }]}>{timeLeft}s</Text> */}
-                    {/* Barre de progression du temps */}
-                   
-                    <View style={[styles.progressBarContainer, { backgroundColor: theme.card }]}>
-                        <View
-                            style={[
-                                styles.progressBar,
-                                {
-                                    backgroundColor: theme.error,
-                                   // width: `${(timeLeft / initialTime) * 100}%`
-                                   width: `${smoothProgress * 100}%`
-                                }
-                            ]}
-                        />
-                    </View>
-                </View>
-            ) : (
-                <View style={styles.infoContainer}>
-                    <Text style={[styles.phaseText, { color: theme.text }]}>Reproduisez le motif</Text>
-                </View>
-            )}
-
-            {/* GRILLE DE JEU */}
-            <View style={[
-                styles.gridContainer,
-                {
-                    width: cellSize * config.gridSize,
-                    height: cellSize * config.gridSize,
-                    borderColor: theme.text,
-                }
-            ]}>
-                {grid.map((cell, index) => {
-                    // Quelle couleur afficher ?
-                    let displayColor = null;
-
-                    if (phase === 'memorize' || isPeeking) { // AJOUT DE isPeeking
-                        // Pendant la mémorisation, on affiche la cible
-                        displayColor = cell.targetColor;
-                    } else if (phase === 'input' || phase === 'complete') {
-                        // Pendant l'input, on affiche ce que le joueur a mis
-                        displayColor = cell.userColor;
-
-                        // Si phase complete (résultat), on peut montrer les erreurs (optionnel, visuel avancé)
-                        // Ici on reste simple pour le moment
-                    }
-
-                    return (
-                        <TouchableOpacity
-                            key={cell.id}
-                            activeOpacity={0.8}
-                            onPress={() => handleCellPress(index)}
-                            style={[
-                                styles.cell,
-                                {
-                                    width: cellSize - 4,
-                                    height: cellSize - 4,
-                                    backgroundColor: displayColor || theme.card, // Couleur ou fond par défaut
-                                    borderColor: theme.text,
-                                    borderWidth: 1,
-                                    borderRadius: difficulty === 'easy' ? 8 : 4,
-                                }
-                            ]}
-                        >
-                            {/* Animation d'apparition */}
-                            {displayColor && (
-                                <MotiView
-                                    from={{ opacity: 0, scale: 0.5 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ type: 'spring' }}
-                                    style={StyleSheet.absoluteFill}
-                                />
-                            )}
-                        </TouchableOpacity>
-                    );
-                })}
+    // Gestion du chargement
+    if (grid.length === 0 && !isGameOver) {
+        return (
+            <View style={[styles.container, { backgroundColor: theme.background }]}>
+                <Text style={{ color: theme.text }}>Chargement du puzzle...</Text>
             </View>
+        );
+    }
 
-            {/* joker pour plus voir */}
-            {phase === 'input' && (
-                <View style={styles.toolsContainer}>
-                    <TouchableOpacity
-                        style={[styles.jokerButton, { opacity: jokersLeft > 0 ? 1 : 0.5 }]}
-                        onPress={handleJoker}
-                        disabled={jokersLeft === 0 || isPeeking}
-                    >
-                        <MaterialCommunityIcons name="eye" size={24} color="#FFF" />
-                        <Text style={{ color: '#FFF', fontWeight: 'bold', marginLeft: 5 }}>
-                            Voir ({jokersLeft})
+    return (
+        <GameScreenWrapper gameId="NeuroPuzzle"> {/* ⭐⭐⭐ AJOUT DU WRAPPER ⭐⭐⭐ */}
+            <View style={{ flex: 1 }}>
+                {/* Interface du jeu - seulement si le jeu n'est pas terminé */}
+                {!isGameOver && (
+                    <View style={[styles.container, { backgroundColor: theme.background }]}>
+                        {/* HEADER & INFO */}
+                        <Text style={[styles.title, { color: theme.text }]}>
+                            NeuroPuzzle - Niv. {level}
                         </Text>
-                    </TouchableOpacity>
-                </View>
-            )}
 
-            {/* PALETTE DE COULEURS (Uniquement en phase Input) */}
-            {phase === 'input' && (
-                <View style={styles.paletteContainer}>
-                    {config.availableColors.map((color) => (
-                        <TouchableOpacity
-                            key={color}
-                            onPress={() => {
-                                playSound('click');
-                                setSelectedPaletteColor(color);
-                            }}
-                            style={[
-                                styles.paletteButton,
-                                { backgroundColor: color },
-                                selectedPaletteColor === color && {
-                                    borderWidth: 3,
-                                    borderColor: theme.text,
-                                    transform: [{ scale: 1.1 }]
+                        {phase === 'memorize' ? (
+                            <View style={styles.infoContainer}>
+                                <Text style={[styles.phaseText, { color: theme.primary }]}>Mémorisez le motif !</Text>
+                                <Text style={[styles.timerText, { color: theme.error }]}>{Math.ceil(timeLeft)}s</Text>
+                                <View style={[styles.progressBarContainer, { backgroundColor: theme.card }]}>
+                                    <View
+                                        style={[
+                                            styles.progressBar,
+                                            {
+                                                backgroundColor: theme.error,
+                                                width: `${smoothProgress * 100}%`
+                                            }
+                                        ]}
+                                    />
+                                </View>
+                            </View>
+                        ) : (
+                            <View style={styles.infoContainer}>
+                                <Text style={[styles.phaseText, { color: theme.text }]}>Reproduisez le motif</Text>
+                            </View>
+                        )}
+
+                        {/* GRILLE DE JEU */}
+                        <View style={[
+                            styles.gridContainer,
+                            {
+                                width: cellSize * config.gridSize,
+                                height: cellSize * config.gridSize,
+                                borderColor: theme.text,
+                            }
+                        ]}>
+                            {grid.map((cell, index) => {
+                                let displayColor = null;
+
+                                if (phase === 'memorize' || isPeeking) {
+                                    displayColor = cell.targetColor;
+                                } else if (phase === 'input' || phase === 'complete') {
+                                    displayColor = cell.userColor;
                                 }
-                            ]}
-                        />
-                    ))}
-                </View>
-            )}
 
-            {/* BOUTON VALIDER */}
-            {phase === 'input' && (
-                <TouchableOpacity
-                    style={[styles.validateButton, { backgroundColor: theme.primary }]}
-                    onPress={handleValidate}
-                >
-                    <Text style={styles.validateButtonText}>Valider</Text>
-                    <MaterialCommunityIcons name="check" size={24} color="#FFF" />
-                </TouchableOpacity>
-            )}
+                                return (
+                                    <TouchableOpacity
+                                        key={cell.id}
+                                        activeOpacity={0.8}
+                                        onPress={() => handleCellPress(index)}
+                                        style={[
+                                            styles.cell,
+                                            {
+                                                width: cellSize - 4,
+                                                height: cellSize - 4,
+                                                backgroundColor: displayColor || theme.card,
+                                                borderColor: theme.text,
+                                                borderWidth: 1,
+                                                borderRadius: difficulty === 'easy' ? 8 : 4,
+                                            }
+                                        ]}
+                                    >
+                                        {displayColor && (
+                                            <MotiView
+                                                from={{ opacity: 0, scale: 0.5 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                transition={{ type: 'spring' }}
+                                                style={StyleSheet.absoluteFill}
+                                            />
+                                        )}
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
 
-            {/* MODAL DE FIN DE PARTIE */}
-            <GameEndModal
-                visible={isGameOver}
-                gameId="NeuroPuzzle" // Assurez-vous d'ajouter ça dans vos types GameId
-                difficulty={difficulty}
-                level={level}
-                isVictory={hasWon}
-                navigation={navigation}
-                isDailyChallenge={isDailyChallenge} //  Passer au modal
-                onClose={() => {
-                    navigation.popToTop();
-                    navigation.navigate('LevelSelect', {
-                        gameId: 'NeuroPuzzle',
-                        gameName: 'NeuroPuzzle',
-                        difficulty
-                    });
-                }}
-            />
-        </View>
+                        {/* JOKER POUR REVOIR */}
+                        {phase === 'input' && (
+                            <View style={styles.toolsContainer}>
+                                <TouchableOpacity
+                                    style={[styles.jokerButton, { opacity: jokersLeft > 0 ? 1 : 0.5 }]}
+                                    onPress={handleJoker}
+                                    disabled={jokersLeft === 0 || isPeeking}
+                                >
+                                    <MaterialCommunityIcons name="eye" size={24} color="#FFF" />
+                                    <Text style={{ color: '#FFF', fontWeight: 'bold', marginLeft: 5 }}>
+                                        Voir ({jokersLeft})
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+
+                        {/* PALETTE DE COULEURS (Uniquement en phase Input) */}
+                        {phase === 'input' && (
+                            <View style={styles.paletteContainer}>
+                                {config.availableColors.map((color) => (
+                                    <TouchableOpacity
+                                        key={color}
+                                        onPress={() => {
+                                            playSound('click');
+                                            setSelectedPaletteColor(color);
+                                        }}
+                                        style={[
+                                            styles.paletteButton,
+                                            { backgroundColor: color },
+                                            selectedPaletteColor === color && {
+                                                borderWidth: 3,
+                                                borderColor: theme.text,
+                                                transform: [{ scale: 1.1 }]
+                                            }
+                                        ]}
+                                    />
+                                ))}
+                            </View>
+                        )}
+
+                        {/* BOUTON VALIDER */}
+                        {phase === 'input' && (
+                            <TouchableOpacity
+                                style={[styles.validateButton, { backgroundColor: theme.primary }]}
+                                onPress={handleValidate}
+                            >
+                                <Text style={styles.validateButtonText}>Valider</Text>
+                                <MaterialCommunityIcons name="check" size={24} color="#FFF" />
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                )}
+
+                {/* ⭐⭐⭐ MODAL DE FIN DE PARTIE - TOUJOURS PRÉSENT ⭐⭐⭐ */}
+                <GameEndModal
+                    visible={isGameOver}
+                    gameId="NeuroPuzzle"
+                    difficulty={difficulty}
+                    level={level}
+                    isVictory={hasWon}
+                  //  score={0} // ⭐⭐⭐ AJOUTEZ UN SCORE SI VOUS EN AVEZ UN ⭐⭐⭐
+                    gameStats={{
+                        timeLeft: timeLeft,
+                        initialTime: initialTime,
+                        jokersUsed: 3 - jokersLeft,
+                        cellsCorrect: grid.filter(cell => cell.userColor === cell.targetColor).length,
+                        totalCells: grid.length,
+                    }}
+                    navigation={navigation}
+                    isDailyChallenge={isDailyChallenge}
+                    onClose={() => {
+                        setIsGameOver(false);
+                        setHasWon(false);
+                        
+                        // Pour les jeux normaux, réinitialiser
+                        if (!isDailyChallenge) {
+                            startLevel();
+                        }
+                    }}
+                />
+            </View>
+        </GameScreenWrapper>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, alignItems: 'center', padding: 20 },
-    title: { fontSize: 24, fontWeight: 'bold', marginBottom: 10 },
-    infoContainer: { width: '100%', marginBottom: 12, minHeight: 40 },
-    phaseText: { fontSize: 18, textAlign: 'center', fontWeight: '600' },
-    timerText: { fontSize: 24, fontWeight: 'bold', textAlign: 'center' },
-
+    container: { 
+        flex: 1, 
+        alignItems: 'center', 
+        padding: 20 
+    },
+    title: { 
+        fontSize: 24, 
+        fontWeight: 'bold', 
+        marginBottom: 10 
+    },
+    infoContainer: { 
+        width: '100%', 
+        marginBottom: 12, 
+        minHeight: 40 
+    },
+    phaseText: { 
+        fontSize: 18, 
+        textAlign: 'center', 
+        fontWeight: '600' 
+    },
+    timerText: { 
+        fontSize: 24, 
+        fontWeight: 'bold', 
+        textAlign: 'center' 
+    },
+    progressBarContainer: {
+        width: '100%',
+        height: 8,
+        borderRadius: 4,
+        marginTop: 5,
+        overflow: 'hidden',
+    },
+    progressBar: {
+        height: '100%',
+        borderRadius: 4,
+    },
     gridContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'center',
         alignContent: 'center',
-        // backgroundColor: 'rgba(0,0,0,0.05)',
     },
     cell: {
         margin: 2,
         justifyContent: 'center',
         alignItems: 'center',
     },
-
     paletteContainer: {
         flexDirection: 'row',
         marginTop: 15,
@@ -380,7 +399,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
     },
-
     validateButton: {
         marginTop: 15,
         flexDirection: 'row',
@@ -396,30 +414,18 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginRight: 10,
     },
-    //style pour le joker
     toolsContainer: {
         marginTop: 15,
         alignItems: 'center',
     },
     jokerButton: {
         flexDirection: 'row',
-        backgroundColor: '#F39C12', // Orange
+        backgroundColor: '#F39C12',
         paddingVertical: 8,
         paddingHorizontal: 15,
         borderRadius: 20,
         alignItems: 'center',
         elevation: 3,
-    },
-    progressBarContainer: {
-        width: '100%',
-        height: 8,
-        borderRadius: 4,
-        marginTop: 5,
-        overflow: 'hidden',
-    },
-    progressBar: {
-        height: '100%',
-        borderRadius: 4,
     },
 });
 

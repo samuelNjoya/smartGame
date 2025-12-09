@@ -10,14 +10,11 @@ import { GameId } from '../../constants/gameData';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { GameStackParamList } from '../../navigation/types';
 import { useSound } from '../../hooks/useSound';
-import GameScreenWrapper from '../../components/games/GameScreenWrapper'; // ⭐⭐⭐ AJOUT ⭐⭐⭐
-import { useDailyChallenge } from '../../hooks/useDailyChallenge'; // ⭐⭐⭐ AJOUT ⭐⭐⭐
 
 type Props = NativeStackScreenProps<GameStackParamList, 'Memory'>;
 
 const MemoryGameScreen = ({ route, navigation }: Props) => {
-  const { difficulty, level } = route.params;
-  const { isDailyChallenge } = useDailyChallenge(); // ⭐⭐⭐ UTILISEZ LE HOOK ⭐⭐⭐
+  const { difficulty, level, isDailyChallenge } = route.params;
   const { theme } = useSettings();
   const { lives } = usePlayer();
   const [deck, setDeck] = useState<MemoryCardType[]>([]);
@@ -27,26 +24,41 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
   const [hasWon, setHasWon] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   const [maxMoves, setMaxMoves] = useState(0);
-  const [containerHeight, setContainerHeight] = useState(0);
-  const [dimensions, setDimensions] = useState(Dimensions.get('window'));
+  const [containerHeight, setContainerHeight] = useState(0);  // ← NOUVEAU : Hauteur réelle
+  const [dimensions, setDimensions] = useState(Dimensions.get('window'));  // ← Écran avec listener
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const GAME_ID: GameId = 'Memory';
-  const { playSound, vibrate } = useSound();
+  const { playSound, vibrate } = useSound(); // UTILISATION DU HOOK pour le son et vibration
 
-  const { width: screenWidth, height: screenHeight } = dimensions;
+  const { width: screenWidth, height: screenHeight } = dimensions;  // ← Utilise state
 
-  const MAX_CARD_WIDTH = Platform.OS === 'android' ? 50 : 60;
+
+  const MAX_CARD_WIDTH = Platform.OS === 'android' ? 50 : 60;  // ← PETIT SUR ANDROID pour + cols (360/60=6)
   const baseColumns = difficulty === 'easy' ? 4 : difficulty === 'medium' ? 5 : 6;
-  const numColumns = Math.min(baseColumns, Math.floor(screenWidth / MAX_CARD_WIDTH));
+  const numColumns = Math.min(baseColumns, Math.floor(screenWidth / MAX_CARD_WIDTH));  // ← Garde min, mais cap plus haut
 
+  // Bonus : Log pour debug (enlève après test)
+  //console.log('Platform Debug:', { os: Platform.OS, screenWidth, maxCardW: MAX_CARD_WIDTH, numColumns });
+
+  // NumRows (après numColumns)
   const numRows = deck.length > 0 ? Math.ceil(deck.length / numColumns) : 0;
 
+  // Taille carte : Basée sur containerHeight RÉELLE (fallback 70 si pas mesuré)
   const GAP = 8;
-  let cardSize = 50;
+  let cardSize = 50;  // ← Default sûr
   if (containerHeight > 0 && numRows > 0) {
     const availableForCards = containerHeight - (numRows - 1) * GAP;
-    cardSize = Math.max(40, Math.min(50, availableForCards / numRows));
+    cardSize = Math.max(40, Math.min(50, availableForCards / numRows));  // ← CAPS STRICTS : 40-80px
   }
+
+  //console.log('Debug:', { numColumns, numRows, cardSize, containerHeight });
+  // Listener resize (ACTIF maintenant)
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', (newDims) => {
+      setDimensions(newDims.window);
+    });
+    return () => subscription?.remove();
+  }, []);
 
   const initGame = () => {
     const calculatedMaxMoves = calculateMaxMoves(difficulty, level);
@@ -78,6 +90,7 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
       const card2 = deck[secondIndex];
       const isMatch = card1.icon === card2.icon;
       if (isMatch) {
+        // SUCCÈS
         playSound('success');
         vibrate('success');
         setDeck(prevDeck =>
@@ -88,6 +101,7 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
         setSelected([]);
         setIsChecking(false);
       } else {
+        // ERREUR
         playSound('error');
         vibrate('error');
         timerRef.current = setTimeout(() => {
@@ -113,7 +127,8 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
     if (isGameOver || maxMoves === 0) return;
     if (moves >= maxMoves) {
       if (!deck.every(card => card.isMatched)) {
-        playSound('lose');
+        // DÉFAITE
+        playSound('lose'); // SON DE DÉFAITE
         vibrate('error');
         setHasWon(false);
         setIsGameOver(true);
@@ -124,7 +139,8 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
 
   useEffect(() => {
     if (deck.length > 0 && deck.every(card => card.isMatched) && !isGameOver) {
-      playSound('win');
+      // VICTOIRE
+      playSound('win'); // SON DE VICTOIRE
       vibrate('success');
       if (timerRef.current) clearTimeout(timerRef.current);
       setHasWon(true);
@@ -134,7 +150,8 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
 
   const handleCardPress = (index: number) => {
     if (isChecking || selected.length === 2 || deck[index].isFlipped || isGameOver) return;
-    playSound('click');
+    // CLICK
+    playSound('click'); // SON DE CLIC
     setDeck(prevDeck =>
       prevDeck.map((card, i) =>
         i === index ? { ...card, isFlipped: true } : card
@@ -143,126 +160,81 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
     setSelected(prevSelected => [...prevSelected, index]);
   };
 
-  // ⭐⭐⭐ CORRECTION : Protection contre les doublons d'enregistrement ⭐⭐⭐
-  const handleGameEnd = () => {
-    // Cette fonction est appelée quand le jeu est terminé
-    // Mais l'enregistrement est fait dans GameEndModal
-    // On ne fait que marquer isGameOver = true
-    setIsGameOver(true);
-  };
-
-  // Gestion du chargement
-  if (deck.length === 0 && !isGameOver) {
-    return (
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
+  return (
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <Text style={[styles.title, { color: theme.text }]}>
+        Memory - Niveau {level} ({difficulty})
+      </Text>
+      <Text style={[styles.moves, { color: theme.text }]}>
+        Coups: {moves} / {maxMoves}
+        <Text style={{ color: theme.error }}>
+          {` (${maxMoves - moves} restants)`}
+        </Text>
+      </Text>
+      {deck.length === 0 && (
         <Text style={[styles.loadingText, { color: theme.text }]}>
           Préparation du jeu...
         </Text>
-      </View>
-    );
-  }
-
-  return (
-    <GameScreenWrapper gameId="Memory"> {/* ⭐⭐⭐ AJOUT DU WRAPPER ⭐⭐⭐ */}
-      <View style={{ flex: 1 }}>
-        {/* Interface du jeu - seulement si le jeu n'est pas terminé */}
-        {!isGameOver && (
-          <View style={[styles.container, { backgroundColor: theme.background }]}>
-            <Text style={[styles.title, { color: theme.text }]}>
-              Memory - Niveau {level} ({difficulty})
-            </Text>
-            <Text style={[styles.moves, { color: theme.text }]}>
-              Coups: {moves} / {maxMoves}
-              <Text style={{ color: theme.error }}>
-                {` (${maxMoves - moves} restants)`}
-              </Text>
-            </Text>
-            
-            <View
-              style={{ flex: 1 }}
-              onLayout={(event) => setContainerHeight(event.nativeEvent.layout.height)}
-            >
-              <FlatList
-                data={deck}
-                keyExtractor={item => item.id.toString()}
-                numColumns={numColumns}
-                key={`memory-grid-${numColumns}-${deck.length}-${difficulty}`}
-                style={{ flexGrow: 0 }}
-                contentContainerStyle={[
-                  styles.grid,
-                  {
-                    minHeight: '100%',
-                    justifyContent: 'flex-start',
-                    alignItems: 'center',
-                  }
-                ]}
-                columnWrapperStyle={{
-                  justifyContent: Platform.OS === 'android' ? 'space-between' : 'space-around',
-                  gap: Platform.OS === 'android' ? 4 : GAP,
-                }}
-                scrollEnabled={false}
-                renderItem={({ item, index }) => (
-                  <MemoryCard
-                    icon={item.icon}
-                    isFlipped={item.isFlipped}
-                    isMatched={item.isMatched}
-                    isDisabled={isChecking}
-                    onPress={() => handleCardPress(index)}
-                    cardSize={cardSize}
-                  />
-                )}
-              />
-            </View>
-          </View>
-        )}
-
-        {/* ⭐⭐⭐ MODAL DE FIN DE JEU - TOUJOURS PRÉSENT ⭐⭐⭐ */}
-        <GameEndModal
-          visible={isGameOver}
-          gameId={GAME_ID}
-          difficulty={difficulty}
-          level={level}
-          isVictory={hasWon}
-        //  score={0} // ⭐⭐⭐ AJOUTEZ UN SCORE SI VOUS EN AVEZ UN ⭐⭐⭐
-          gameStats={{
-            moves: moves,
-            maxMoves: maxMoves,
-            pairsFound: deck.filter(card => card.isMatched).length / 2,
-          }}
-          navigation={navigation}
-          isDailyChallenge={isDailyChallenge}
-          onClose={() => {
-            setIsGameOver(false);
-            setHasWon(false);
-            // ⭐⭐⭐ NE PAS GÉRER LA NAVIGATION ICI ⭐⭐⭐
-            // La navigation est gérée dans GameEndModal.tsx
-            
-            // Pour les jeux normaux, réinitialiser
-            if (!isDailyChallenge) {
-              initGame();
+      )}
+      {/* WRAPPER POUR MESURER HAUTEUR RÉELLE (après header) */}
+      <View
+        style={{ flex: 1 }}  // ← Prend reste espace
+        onLayout={(event) => setContainerHeight(event.nativeEvent.layout.height)}  // ← MESURE AUTO
+      >
+        <FlatList
+          data={deck}
+          keyExtractor={item => item.id.toString()}
+          numColumns={numColumns}
+          // key={`memory-grid-${numColumns}-${deck.length}`}  // ← Remount sûr
+          key={`memory-grid-${numColumns}-${deck.length}-${difficulty}`}  // ← Ajoute difficulty : Change au switch !
+          style={{ flexGrow: 0 }}  // ← Pas de height fixe : Wrapper gère
+          contentContainerStyle={[
+            styles.grid,
+            {
+              minHeight: '100%',  // ← Remplit sans clip
+              justifyContent: 'flex-start',
+              alignItems: 'center',
             }
+          ]}
+          columnWrapperStyle={{
+            justifyContent: Platform.OS === 'android' ? 'space-between' : 'space-around',  // ← Tight sur Android
+            gap: Platform.OS === 'android' ? 4 : GAP,  // ← Gap réduit 4px sur Android
           }}
+          scrollEnabled={false}  // ← No scroll
+          renderItem={({ item, index }) => (
+            <MemoryCard
+              icon={item.icon}
+              isFlipped={item.isFlipped}
+              isMatched={item.isMatched}
+              isDisabled={isChecking}
+              onPress={() => handleCardPress(index)}
+              cardSize={cardSize}
+            />
+
+          )}
         />
       </View>
-    </GameScreenWrapper>
+      <GameEndModal
+        visible={isGameOver}
+        gameId={GAME_ID}
+        difficulty={difficulty}
+        level={level}
+        isVictory={hasWon}
+        navigation={navigation}
+        isDailyChallenge={isDailyChallenge} // 2. Passer au modal
+        onClose={() => {
+          navigation.popToTop();
+          navigation.navigate('LevelSelect', { gameId: GAME_ID, gameName: 'Memory', difficulty });
+        }}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    alignItems: 'center', 
-    padding: 10 
-  },
-  title: { 
-    fontSize: 24, 
-    fontWeight: 'bold',
-    marginBottom: 10 
-  },
-  moves: { 
-    fontSize: 18, 
-    marginVertical: 10 
-  },
+  container: { flex: 1, alignItems: 'center', padding: 10 },
+  title: { fontSize: 24, fontWeight: 'bold' },
+  moves: { fontSize: 18, marginVertical: 10 },
   loadingText: {
     fontSize: 16,
     fontStyle: 'italic',

@@ -12,8 +12,6 @@ import { GameStackParamList } from '../../navigation/types';
 import { GameDifficulty } from '../../constants/gameData';
 import { generateMathLevel, MathProblem } from './mathGenerator';
 import GameEndModal from '../../components/modals/GameEndModal';
-import GameScreenWrapper from '../../components/games/GameScreenWrapper';
-import { useDailyChallenge } from '../../hooks/useDailyChallenge';
 
 type Props = NativeStackScreenProps<GameStackParamList, 'MathRush'>;
 const { width } = Dimensions.get('window');
@@ -41,9 +39,8 @@ interface HelpState {
 }
 
 const MathRushScreen = ({ route, navigation }: Props) => {
-    //const [modalVisible, setModalVisible] = useState(false); // <--- Utilisé mais pas en rendu
-    const { isDailyChallenge } = useDailyChallenge();
-    const { difficulty, level } = route.params; //, isDailyChallenge 
+    const [modalVisible, setModalVisible] = useState(false); // <--- Utilisé mais pas en rendu
+    const { difficulty, level, isDailyChallenge } = route.params;
     const { theme } = useSettings();
     const { playSound, vibrate } = useSound();
     const { addXP, spendLife } = usePlayer();
@@ -268,29 +265,23 @@ const MathRushScreen = ({ route, navigation }: Props) => {
         //     spendLife(1);
         // }
 
-      //  setCurrentState(prev => ({ ...prev, isGameOver: true, hasWonLevel: isVictory }));
+        setCurrentState(prev => ({ ...prev, isGameOver: true, hasWonLevel: isVictory }));
         // 2. Afficher le modal (MAINTENANT que le jeu est marqué comme terminé)
-        // setModalVisible(true);
-        // ⭐⭐⭐ DIRECTEMENT isGameOver, pas besoin de modalVisible ⭐⭐⭐
-        setCurrentState(prev => ({
-            ...prev,
-            isGameOver: true,
-            hasWonLevel: isVictory
-        }));
+        setModalVisible(true);
     };
 
     // NOUVEAU: Fonction pour fermer le modal et réinitialiser l'état du jeu
-    const handleCloseModal = () => {
-        // 1. Cacher le modal
-        //  setModalVisible(false);
+const handleCloseModal = () => {
+    // 1. Cacher le modal
+    setModalVisible(false);
 
-        // 2. IMPORTANT: Réinitialiser isGameOver pour permettre le retour
-        // Si nous ne faisons pas cela, l'écran reste en mode "isGameOver=true"
-        setCurrentState(prev => ({ ...prev, isGameOver: false }));
+    // 2. IMPORTANT: Réinitialiser isGameOver pour permettre le retour
+    // Si nous ne faisons pas cela, l'écran reste en mode "isGameOver=true"
+    setCurrentState(prev => ({ ...prev, isGameOver: false }));
 
-        // Si le joueur veut rejouer/quitter le niveau, c'est le MODAL qui gère la navigation
-        // C'est le rôle du modal de naviguer.
-    };
+    // Si le joueur veut rejouer/quitter le niveau, c'est le MODAL qui gère la navigation
+    // C'est le rôle du modal de naviguer.
+};
 
     // ⭐⭐⭐ USEFFECT APRÈS TOUTES LES FONCTIONS ⭐⭐⭐
 
@@ -327,62 +318,33 @@ const MathRushScreen = ({ route, navigation }: Props) => {
     const currentProblem = problems[currentIndex];
 
     // if (modalVisible) {
-    // if (currentState.isGameOver) {
-    //     return (
-    //         <GameEndModal
-    //            visible={currentState.isGameOver} 
-    //           // visible={modalVisible}
-    //             gameId="MathRush"
-    //             difficulty={difficulty}
-    //             level={level}
-    //             isVictory={currentState.hasWonLevel}
-    //             score={currentState.totalPoints}
-    //             navigation={navigation}
-    //             isDailyChallenge={isDailyChallenge} // 2. Passer au modal
-    //             onClose={() => {
-    //                 navigation.popToTop();
-    //                 navigation.navigate('LevelSelect', {
-    //                     gameId: 'MathRush',
-    //                     gameName: 'Calcul Express',
-    //                     difficulty
-    //                 });
-    //             }}
-    //             // MODIFICATION CLÉ 1 : Utiliser la nouvelle fonction pour réinitialiser
-    //         // onClose={handleCloseModal}
-    //         />
-    //     );
-    // }
+    if (currentState.isGameOver) {
+        return (
+            <GameEndModal
+               visible={currentState.isGameOver} 
+              // visible={modalVisible}
+                gameId="MathRush"
+                difficulty={difficulty}
+                level={level}
+                isVictory={currentState.hasWonLevel}
+                score={currentState.totalPoints}
+                navigation={navigation}
+                isDailyChallenge={isDailyChallenge} // 2. Passer au modal
+                onClose={() => {
+                    navigation.popToTop();
+                    navigation.navigate('LevelSelect', {
+                        gameId: 'MathRush',
+                        gameName: 'Calcul Express',
+                        difficulty
+                    });
+                }}
+                // MODIFICATION CLÉ 1 : Utiliser la nouvelle fonction pour réinitialiser
+            // onClose={handleCloseModal}
+            />
+        );
+    }
 
-    // <GameEndModal
-    //     visible={currentState.isGameOver} // ⭐⭐⭐ SUPPRIMEZ && modalVisible ⭐⭐⭐
-    //     gameId="MathRush"
-    //     difficulty={difficulty}
-    //     level={level}
-    //     isVictory={currentState.hasWonLevel}
-    //     score={currentState.totalPoints}
-    //     gameStats={{
-    //         errors: currentState.errors,
-    //         succèsConsécutifs: currentState.succèsConsécutifs,
-    //     }}
-    //     navigation={navigation}
-    //     isDailyChallenge={isDailyChallenge}
-    //     onClose={() => {
-    //         // SUPPRIMEZ setModalVisible(false);
-    //         setCurrentState(prev => ({
-    //             ...prev,
-    //             isGameOver: false,
-    //             hasWonLevel: false
-    //         }));
-
-    //         // Pour les jeux normaux, réinitialiser
-    //         if (!isDailyChallenge) {
-    //             startLevel();
-    //         }
-    //     }}
-    // />
-
-    // PAR :
-    if (!currentProblem && !currentState.isGameOver) {
+    if (!currentProblem) {
         return (
             <View style={[styles.container, { backgroundColor: theme.background }]}>
                 <Text style={{ color: theme.text }}>Chargement du problème...</Text>
@@ -411,176 +373,141 @@ const MathRushScreen = ({ route, navigation }: Props) => {
     });
 
     return (
-        <GameScreenWrapper gameId="MathRush">
-            <View style={{ flex: 1 }}>
-                {/* Interface du jeu - seulement si le jeu n'est pas terminé */}
-                {!currentState.isGameOver && (
-                    <Animated.View style={[styles.container, { backgroundColor: theme.background, transform: [{ translateX: shakeAnimation }] }]}>
+        <Animated.View style={[styles.container, { backgroundColor: theme.background, transform: [{ translateX: shakeAnimation }] }]}>
 
-                        {/* ✅ MODIFICATION 3: Overlay de feedback visuel */}
-                        {feedback.type && (
-                            <Animated.View
-                                style={[
-                                    styles.feedbackOverlay,
-                                    {
-                                        backgroundColor: feedback.type === 'correct' ? 'rgba(76, 175, 80, 0.9)' : 'rgba(244, 67, 54, 0.9)',
-                                        opacity: feedbackOpacity
-                                    }
-                                ]}
-                            >
-                                <MotiView
-                                    from={{ scale: 0.5, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    transition={{ type: 'spring' }}
-                                >
-                                    <MaterialCommunityIcons
-                                        name={feedback.type === 'correct' ? 'check-circle' : 'close-circle'}
-                                        size={80}
-                                        color="#FFFFFF"
-                                    />
-                                    <Text style={styles.feedbackText}>
-                                        {feedback.type === 'correct' ? 'Correct ! 🎉' : 'Faux ! 😞'}
-                                    </Text>
-                                    {feedback.type === 'incorrect' && (
-                                        <Text style={styles.correctAnswerText}>
-                                            Réponse correcte: {currentProblem?.answer}
-                                        </Text>
-                                    )}
-                                </MotiView>
-                            </Animated.View>
-                        )}
-
-                        {/* Barre de Progression / Timer */}
-                        <View style={styles.timeBarContainer}>
-                            <Animated.View
-                                style={[
-                                    styles.timeBar,
-                                    {
-                                        width: timeBarWidth,
-                                        backgroundColor: getTimeBarColor()
-                                    }
-                                ]}
-                            />
-                        </View>
-
-                        {/* Statistiques (Score, Erreurs, Vies) */}
-                        <View style={styles.statsRow}>
-                            <Text style={[styles.statText, { color: theme.text }]}>Score: {currentState.totalPoints}</Text>
-                            <Text style={[styles.statText, { color: theme.error }]}>Erreurs: {currentState.errors}/3</Text>
-                            <Text style={[styles.statText, { color: theme.primary }]}>Succès: {currentState.succèsConsécutifs}</Text>
-                        </View>
-
-                        {/* ✅ MODIFICATION 2: Bouton d'aide pour éliminer 2 mauvaises réponses */}
-                        <TouchableOpacity
-                            style={[
-                                styles.helpButton,
-                                {
-                                    backgroundColor: helpState.eliminationsLeft > 0 ? theme.primary : '#CCCCCC',
-                                    opacity: helpState.eliminationsLeft > 0 ? 1 : 0.5
-                                }
-                            ]}
-                            onPress={useEliminationHelp}
-                            disabled={helpState.eliminationsLeft === 0}
-                        >
-                            <MaterialCommunityIcons
-                                name="filter-remove"
-                                size={24}
-                                color="#FFFFFF"
-                            />
-                            <Text style={styles.helpButtonText}>
-                                Éliminer 2 mauvaises réponses ({helpState.eliminationsLeft})
-                            </Text>
-                        </TouchableOpacity>
-
-                        {/* ZONE DE QUESTION */}
-                        <View style={styles.questionContainer}>
-                            <Text style={[styles.questionText, { color: theme.text }]}>
-                                {currentProblem?.question}
-                            </Text>
-                        </View>
-
-                        {/* OPTIONS DE RÉPONSE */}
-                        <View style={styles.optionsContainer}>
-                            <AnimatePresence initial={false}>
-                                {currentProblem?.options.map((option, index) => {
-                                    // ✅ MODIFICATION 2: Vérifier si cette option est éliminée
-                                    const isEliminated = helpState.eliminatedOptions.includes(index);
-
-                                    return (
-                                        <MotiView
-                                            key={option}
-                                            from={{ opacity: 0, translateY: 50 }}
-                                            animate={{
-                                                opacity: isEliminated ? 0.3 : 1,
-                                                translateY: 0
-                                            }}
-                                            exit={{ opacity: 0, scale: 0.5 }}
-                                            transition={{ type: 'timing', duration: 300, delay: index * 50 }}
-                                        >
-                                            <TouchableOpacity
-                                                style={[
-                                                    styles.optionButton,
-                                                    {
-                                                        backgroundColor: isEliminated ? '#666666' : theme.primary,
-                                                        opacity: isEliminated ? 0.5 : 1
-                                                    }
-                                                ]}
-                                                onPress={() => !isEliminated && handleAnswer(option)}
-                                                disabled={isEliminated}
-                                            >
-                                                {isEliminated && (
-                                                    <MaterialCommunityIcons
-                                                        name="close"
-                                                        size={24}
-                                                        color="#FFFFFF"
-                                                        style={styles.eliminatedIcon}
-                                                    />
-                                                )}
-                                                <Text style={styles.optionText}>{option}</Text>
-                                            </TouchableOpacity>
-                                        </MotiView>
-                                    );
-                                })}
-                            </AnimatePresence>
-                        </View>
-
-                        {/* Information du niveau */}
-                        <Text style={[styles.levelInfo, { color: theme.secondary }]}>
-                            Niveau {level} ({difficulty.toUpperCase()}) | Question {currentIndex + 1}/{problems.length}
-                        </Text>
-                    </Animated.View>
-                )}
-
-                {/* ⭐⭐⭐ MODAL DE FIN DE JEU - TOUJOURS PRÉSENT DANS L'ARBRE ⭐⭐⭐ */}
-                <GameEndModal
-                    visible={currentState.isGameOver} // ⭐⭐⭐ SUPPRIMEZ && modalVisible ⭐⭐⭐
-                    gameId="MathRush"
-                    difficulty={difficulty}
-                    level={level}
-                    isVictory={currentState.hasWonLevel}
-                    score={currentState.totalPoints}
-                    gameStats={{
-                        errors: currentState.errors,
-                        succèsConsécutifs: currentState.succèsConsécutifs,
-                    }}
-                    navigation={navigation}
-                    isDailyChallenge={isDailyChallenge}
-                    onClose={() => {
-                        // SUPPRIMEZ setModalVisible(false);
-                        setCurrentState(prev => ({
-                            ...prev,
-                            isGameOver: false,
-                            hasWonLevel: false
-                        }));
-
-                        // Pour les jeux normaux, réinitialiser
-                        if (!isDailyChallenge) {
-                            startLevel();
+            {/* ✅ MODIFICATION 3: Overlay de feedback visuel */}
+            {feedback.type && (
+                <Animated.View
+                    style={[
+                        styles.feedbackOverlay,
+                        {
+                            backgroundColor: feedback.type === 'correct' ? 'rgba(76, 175, 80, 0.9)' : 'rgba(244, 67, 54, 0.9)',
+                            opacity: feedbackOpacity
                         }
-                    }}
+                    ]}
+                >
+                    <MotiView
+                        from={{ scale: 0.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: 'spring' }}
+                    >
+                        <MaterialCommunityIcons
+                            name={feedback.type === 'correct' ? 'check-circle' : 'close-circle'}
+                            size={80}
+                            color="#FFFFFF"
+                        />
+                        <Text style={styles.feedbackText}>
+                            {feedback.type === 'correct' ? 'Correct ! 🎉' : 'Faux ! 😞'}
+                        </Text>
+                        {feedback.type === 'incorrect' && (
+                            <Text style={styles.correctAnswerText}>
+                                Réponse correcte: {currentProblem.answer}
+                            </Text>
+                        )}
+                    </MotiView>
+                </Animated.View>
+            )}
+
+            {/* Barre de Progression / Timer */}
+            <View style={styles.timeBarContainer}>
+                <Animated.View
+                    style={[
+                        styles.timeBar,
+                        {
+                            width: timeBarWidth,
+                            backgroundColor: getTimeBarColor()
+                        }
+                    ]}
                 />
             </View>
-        </GameScreenWrapper>
+
+            {/* Statistiques (Score, Erreurs, Vies) */}
+            <View style={styles.statsRow}>
+                <Text style={[styles.statText, { color: theme.text }]}>Score: {currentState.totalPoints}</Text>
+                <Text style={[styles.statText, { color: theme.error }]}>Erreurs: {currentState.errors}/3</Text>
+                {/* ✅ MODIFICATION 1: Affichage des "Succès consécutifs" */}
+                <Text style={[styles.statText, { color: theme.primary }]}>Succès: {currentState.succèsConsécutifs}</Text>
+            </View>
+
+            {/* ✅ MODIFICATION 2: Bouton d'aide pour éliminer 2 mauvaises réponses */}
+            <TouchableOpacity
+                style={[
+                    styles.helpButton,
+                    {
+                        backgroundColor: helpState.eliminationsLeft > 0 ? theme.primary : '#CCCCCC',
+                        opacity: helpState.eliminationsLeft > 0 ? 1 : 0.5
+                    }
+                ]}
+                onPress={useEliminationHelp}
+                disabled={helpState.eliminationsLeft === 0}
+            >
+                <MaterialCommunityIcons
+                    name="filter-remove"
+                    size={24}
+                    color="#FFFFFF"
+                />
+                <Text style={styles.helpButtonText}>
+                    Éliminer 2 mauvaises réponses ({helpState.eliminationsLeft})
+                </Text>
+            </TouchableOpacity>
+
+            {/* ZONE DE QUESTION */}
+            <View style={styles.questionContainer}>
+                <Text style={[styles.questionText, { color: theme.text }]}>
+                    {currentProblem.question}
+                </Text>
+            </View>
+
+            {/* OPTIONS DE RÉPONSE */}
+            <View style={styles.optionsContainer}>
+                <AnimatePresence initial={false}>
+                    {currentProblem.options.map((option, index) => {
+                        // ✅ MODIFICATION 2: Vérifier si cette option est éliminée
+                        const isEliminated = helpState.eliminatedOptions.includes(index);
+
+                        return (
+                            <MotiView
+                                key={option}
+                                from={{ opacity: 0, translateY: 50 }}
+                                animate={{
+                                    opacity: isEliminated ? 0.3 : 1,
+                                    translateY: 0
+                                }}
+                                exit={{ opacity: 0, scale: 0.5 }}
+                                transition={{ type: 'timing', duration: 300, delay: index * 50 }}
+                            >
+                                <TouchableOpacity
+                                    style={[
+                                        styles.optionButton,
+                                        {
+                                            backgroundColor: isEliminated ? '#666666' : theme.primary,
+                                            opacity: isEliminated ? 0.5 : 1
+                                        }
+                                    ]}
+                                    onPress={() => !isEliminated && handleAnswer(option)}
+                                    disabled={isEliminated}
+                                >
+                                    {isEliminated && (
+                                        <MaterialCommunityIcons
+                                            name="close"
+                                            size={24}
+                                            color="#FFFFFF"
+                                            style={styles.eliminatedIcon}
+                                        />
+                                    )}
+                                    <Text style={styles.optionText}>{option}</Text>
+                                </TouchableOpacity>
+                            </MotiView>
+                        );
+                    })}
+                </AnimatePresence>
+            </View>
+
+            {/* Information du niveau */}
+            <Text style={[styles.levelInfo, { color: theme.secondary }]}>
+                Niveau {level} ({difficulty.toUpperCase()}) | Question {currentIndex + 1}/{problems.length}
+            </Text>
+        </Animated.View>
     );
 };
 

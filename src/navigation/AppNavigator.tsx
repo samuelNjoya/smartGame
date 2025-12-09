@@ -7,8 +7,19 @@ import { RootStackParamList } from './types';
 import MainTabs from './MainTabs';
 import { StatusBar } from 'expo-status-bar';
 import SplashScreen from '../components/SplashScreen'; // Assurez-vous que le chemin est correct
+import { createNavigationContainerRef } from '@react-navigation/native';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
+
+export const navigationRef = createNavigationContainerRef();
+
+export function navigate(name: string, params?: any) {
+  if (navigationRef.isReady()) {
+    console.log('Navigation vers:', name, 'avec params:', params);
+    navigationRef.navigate(name, params);
+  }
+}
 
 const AppNavigator = () => {
   const { theme, isDarkMode } = useSettings();

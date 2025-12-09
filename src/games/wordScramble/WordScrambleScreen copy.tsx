@@ -11,15 +11,12 @@ import { GameStackParamList } from '../../navigation/types';
 import { GameDifficulty } from '../../constants/gameData';
 import { generateWordLevel, ScrambleWord } from './wordScramble.logic';
 import GameEndModal from '../../components/modals/GameEndModal';
-import GameScreenWrapper from '../../components/games/GameScreenWrapper';
-import { useDailyChallenge } from '../../hooks/useDailyChallenge';
 
 type Props = NativeStackScreenProps<GameStackParamList, 'WordScramble'>;
 const { width } = Dimensions.get('window');
 
 const WordScrambleScreen = ({ route, navigation }: Props) => {
-  const { isDailyChallenge } = useDailyChallenge();
-  const { difficulty, level } = route.params;
+  const { difficulty, level, isDailyChallenge } = route.params;
   const { theme } = useSettings();
   const { playSound, vibrate } = useSound();
   
@@ -37,20 +34,6 @@ const WordScrambleScreen = ({ route, navigation }: Props) => {
   // États de fin
   const [isGameOver, setIsGameOver] = useState(false);
   const [hasWonLevel, setHasWonLevel] = useState(false);
-
-  // AJOUTEZ cet effet pour gérer le cas où le jeu ne se charge pas :
-  useEffect(() => {
-    if (isDailyChallenge && words.length === 0) {
-      // Si c'est un défi et que les mots ne sont pas chargés après un délai
-      const timeout = setTimeout(() => {
-        if (words.length === 0) {
-          startLevel();
-        }
-      }, 500);
-      
-      return () => clearTimeout(timeout);
-    }
-  }, [isDailyChallenge, words.length]);
 
   // Initialisation
   useEffect(() => {
@@ -102,7 +85,8 @@ const WordScrambleScreen = ({ route, navigation }: Props) => {
   // Logique de validation
   useEffect(() => {
      //  STOP : plus aucune logique ne doit se jouer après la fin du jeu
-    if (isGameOver) return;
+  if (isGameOver) return;
+    //if (words.length === 0) return;
     if (words.length === 0 || !words[currentIndex]) return;
     const currentWord = words[currentIndex];
 
@@ -119,7 +103,7 @@ const WordScrambleScreen = ({ route, navigation }: Props) => {
         setTimeout(() => resetInput(), 500);
       }
     }
-  }, [userAttempt, words, currentIndex, isGameOver]);
+  }, [userAttempt,words,currentIndex,isGameOver]);// Assurez-vous d'avoir ces dépendances
 
   const resetInput = () => {
     setUserAttempt('');
@@ -142,6 +126,16 @@ const WordScrambleScreen = ({ route, navigation }: Props) => {
     // Retrouver la dernière lettre ajoutée et la rendre disponible
     const lastChar = userAttempt.slice(-1);
     
+    // Trouver une instance de cette lettre marquée comme 'used' dans availableLetters
+    // On doit prendre la dernière utilisée pour être cohérent, mais ici l'ordre visuel n'est pas strict
+    // Simplification : on réactive la première instance trouvée qui est 'used' et match le char
+    // (Dans une vraie app, on utiliserait une pile d'historique d'index)
+    
+    // Amélioration : Utiliser une pile d'index pour backspace précis
+    // Pour simplifier ici : on réinitialise tout si on backspace (ou logique simple)
+    // Logique simple pour ce snippet :
+    const newAttempt = userAttempt.slice(0, -1);
+    
     // Réactiver une lettre correspondante
     let restored = false;
     const newLetters = availableLetters.map(l => {
@@ -152,7 +146,7 @@ const WordScrambleScreen = ({ route, navigation }: Props) => {
       return l;
     });
 
-    setUserAttempt(userAttempt.slice(0, -1));
+    setUserAttempt(newAttempt);
     setAvailableLetters(newLetters);
     playSound('click');
   };
@@ -170,6 +164,13 @@ const WordScrambleScreen = ({ route, navigation }: Props) => {
     newWords[currentIndex].status = 'success';
     setWords(newWords);
     
+    // Vérifier Power-Ups
+    // if (newStreak === 5) Alert.alert("🔥 Série de 5 !", "Double XP activé pour le prochain mot !");
+    // if (newStreak === 10) {
+    //    Alert.alert("⚡️ Série de 10 !", "+10 secondes bonus !");
+    //    setTimeLeft(t => t + 10);
+    // }
+
     nextWord();
   };
 
@@ -236,102 +237,94 @@ const WordScrambleScreen = ({ route, navigation }: Props) => {
   }
 
   return (
-    <GameScreenWrapper gameId="WordScramble">
-      <View style={{ flex: 1 }}>
-        {/* Interface du jeu - seulement si le jeu n'est pas terminé */}
-        {!isGameOver && (
-          <View style={[styles.container, { backgroundColor: theme.background }]}>
-            {/* HEADER */}
-            <View style={styles.header}>
-              <Text style={[styles.title, { color: theme.text }]}>
-                Niveau {level}
-              </Text>
-              <View style={styles.statsRow}>
-                <Text style={{ color: timeLeft < 10 ? theme.error : theme.primary, fontWeight: 'bold' }}>
-                  ⏱ {Math.floor(timeLeft)}s
-                </Text>
-                <Text style={{ color: theme.secondary }}>
-                  Mots: {currentIndex + 1}/{words.length}
-                </Text>
-                {streak > 1 && <Text style={{ color: '#FFD700', fontWeight: 'bold' }}>🔥 x{streak}</Text>}
-              </View>
-            </View>
-
-            {/* MOTS PRÉCÉDENTS (Indicateurs) */}
-            <View style={styles.progressIndicators}>
-              {words.map((w, i) => (
-                <MaterialCommunityIcons 
-                  key={i}
-                  name={w.status === 'success' ? 'check-circle' : (w.status === 'failed' ? 'close-circle' : 'circle-outline')}
-                  size={20}
-                  color={w.status === 'success' ? theme.success : (w.status === 'failed' ? theme.error : theme.secondary)}
-                  style={{ marginHorizontal: 2 }}
-                />
-              ))}
-            </View>
-
-            {/* ZONE DE JEU */}
-            <View style={styles.gameArea}>
-              {renderAnswerSlots()}
-              
-              {/* Lettres Disponibles */}
-              <View style={styles.lettersContainer}>
-                {availableLetters.map((item, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    disabled={item.used}
-                    onPress={() => handleLetterPress(item.char, index)}
-                    style={[
-                      styles.letterButton, 
-                      { 
-                        backgroundColor: item.used ? theme.background : theme.primary,
-                        borderColor: theme.primary,
-                        opacity: item.used ? 0.3 : 1
-                      }
-                    ]}
-                  >
-                    <Text style={[styles.letterText, { color: item.used ? theme.text : '#FFF' }]}>
-                      {item.char}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {/* BOUTONS D'ACTION */}
-            <View style={styles.actions}>
-              <TouchableOpacity onPress={handleBackspace} style={[styles.actionButton, { backgroundColor: theme.secondary }]}>
-                <MaterialCommunityIcons name="backspace" size={24} color="#FFF" />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={resetInput} style={[styles.actionButton, { backgroundColor: theme.error }]}>
-                <MaterialCommunityIcons name="refresh" size={24} color="#FFF" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {/* MODAL DE FIN */}
-        <GameEndModal
-          visible={isGameOver}
-          gameId="WordScramble"
-          difficulty={difficulty}
-          level={level}
-          isVictory={hasWonLevel}
-          score={0} // À ajuster selon votre logique de score
-          gameStats={{
-            wordsCompleted: currentIndex,
-            totalWords: words.length,
-          }}
-          navigation={navigation}
-          isDailyChallenge={isDailyChallenge}
-          onClose={() => {
-            setIsGameOver(false);
-            setHasWonLevel(false);
-            // La navigation est gérée dans GameEndModal.tsx
-          }}
-        />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      {/* HEADER */}
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: theme.text }]}>
+          Niveau {level}
+        </Text>
+        <View style={styles.statsRow}>
+           <Text style={{ color: timeLeft < 10 ? theme.error : theme.primary, fontWeight: 'bold' }}>
+             ⏱ {timeLeft}s
+           </Text>
+           <Text style={{ color: theme.secondary }}>
+             Mots: {currentIndex + 1}/{words.length}
+           </Text>
+           {streak > 1 && <Text style={{ color: '#FFD700', fontWeight: 'bold' }}>🔥 x{streak}</Text>}
+        </View>
       </View>
-    </GameScreenWrapper>
+
+      {/* MOTS PRÉCÉDENTS (Indicateurs) */}
+      <View style={styles.progressIndicators}>
+        {words.map((w, i) => (
+          <MaterialCommunityIcons 
+            key={i}
+            name={w.status === 'success' ? 'check-circle' : (w.status === 'failed' ? 'close-circle' : 'circle-outline')}
+            size={20}
+            color={w.status === 'success' ? theme.success : (w.status === 'failed' ? theme.error : theme.secondary)}
+            style={{ marginHorizontal: 2 }}
+          />
+        ))}
+      </View>
+
+      {/* ZONE DE JEU */}
+      <View style={styles.gameArea}>
+        {renderAnswerSlots()}
+        
+        {/* Lettres Disponibles */}
+        <View style={styles.lettersContainer}>
+          {availableLetters.map((item, index) => (
+             <TouchableOpacity
+               key={index}
+               disabled={item.used}
+               onPress={() => handleLetterPress(item.char, index)}
+               style={[
+                 styles.letterButton, 
+                 { 
+                   backgroundColor: item.used ? theme.background : theme.primary,
+                   borderColor: theme.primary,
+                   opacity: item.used ? 0.3 : 1
+                 }
+               ]}
+             >
+               <Text style={[styles.letterText, { color: item.used ? theme.text : '#FFF' }]}>
+                 {item.char}
+               </Text>
+             </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* BOUTONS D'ACTION */}
+      <View style={styles.actions}>
+        <TouchableOpacity onPress={handleBackspace} style={[styles.actionButton, { backgroundColor: theme.secondary }]}>
+           <MaterialCommunityIcons name="backspace" size={24} color="#FFF" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={resetInput} style={[styles.actionButton, { backgroundColor: theme.error }]}>
+           <MaterialCommunityIcons name="refresh" size={24} color="#FFF" />
+        </TouchableOpacity>
+        {/* Power up hints could go here */}
+      </View>
+
+      {/* MODAL DE FIN */}
+      <GameEndModal
+        visible={isGameOver}
+        gameId="WordScramble" // S'assurer que 'WordScramble' est dans GameId type
+        difficulty={difficulty}
+        level={level}
+        isVictory={hasWonLevel}
+        navigation={navigation}
+        isDailyChallenge={isDailyChallenge} // 2. Passer au modal <GameScreenWrapper gameId="MathRush">
+        onClose={() => {
+          navigation.popToTop();
+          navigation.navigate('LevelSelect', { 
+            gameId: 'WordScramble', 
+            gameName: 'Mots Mêlés', 
+            difficulty 
+          });
+        }}
+      />
+    </View>
   );
 };
 

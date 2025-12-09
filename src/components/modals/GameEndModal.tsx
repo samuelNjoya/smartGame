@@ -1,6 +1,6 @@
 // src/components/modals/GameEndModal.tsx
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, Modal, StyleSheet, Button, Alert } from 'react-native';
 import { useSettings } from '../../hooks/useSettings';
 import { usePlayer, } from '../../hooks/usePlayer';
@@ -12,6 +12,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import RandomRewardModal from './RandomRewardModal'; // NOUVEL IMPORT
 import { GameResult } from '../../contexts/PlayerContext';
 import DailyChallengeService from '../../services/DailyChallengeService';
+import DailyChallengeNavigation from '../../services/DailyChallengeNavigation';
 // On crée un type partiel pour les stats pour les props
 type GameStats = Partial<GameResult['stats']>;
 
@@ -52,6 +53,8 @@ const GameEndModal = ({
   const [xpEarned, setXpEarned] = useState(0);
   const [showRandomRewardModal, setShowRandomRewardModal] = useState(false);
   const [isNewLevelUnlocked, setIsNewLevelUnlocked] = useState(false);
+    // ⭐⭐⭐ AJOUT : Ref pour suivre si l'enregistrement a déjà été fait ⭐⭐⭐
+  const hasRecordedResult = useRef(false);
 
   const isMultipleOf5 = level % 5 === 0;
   const isMultipleOf10 = level % 10 === 0;
@@ -60,7 +63,18 @@ const GameEndModal = ({
 
   // --- Logique de Récompense et Progression ---
   React.useEffect(() => {
-    if (!visible) return;
+    //if (!visible) return;
+      // ⭐⭐⭐ CORRECTION : Réinitialiser quand le modal devient invisible ⭐⭐⭐
+    if (!visible) {
+      hasRecordedResult.current = false;
+      return;
+    }
+// ⭐⭐⭐ CORRECTION : Ne pas enregistrer si déjà fait ⭐⭐⭐
+    if (hasRecordedResult.current) {
+      return;
+    }
+
+     hasRecordedResult.current = true;
 
     // --- 1. Enregistrement des statistiques (Indépendant de la victoire) ---
     // Nous enregistrons le résultat seulement si le niveau est terminé (visible est true)
@@ -204,16 +218,40 @@ const GameEndModal = ({
   // };
 
   // NOUVELLE FONCTION de sortie pour le Défi (CORRECTION 1)
+
+// const handleChallengeQuit = () => {
+//     onClose(); // 1. Fermer le modal
+//     // 2. Tenter de revenir en arrière dans la pile actuelle (sortir du jeu)
+//     // Cela fonctionne si le jeu est l'écran au sommet de la pile GameStack.
+//    navigation.goBack(); 
+//     // 3. Naviguer vers l'écran DailyChallenge (le tab)
+//     // On utilise la navigation du tab (MainTabs), qui est accessible depuis n'importe quel enfant.
+//     // Assurez-vous que le nom de l'onglet est bien 'DailyChallenge' dans MainTabs.tsx
+//     navigation.navigate('DailyChallenge' as any); 
+// };
+
 const handleChallengeQuit = () => {
-    onClose(); // 1. Fermer le modal
-    // 2. Tenter de revenir en arrière dans la pile actuelle (sortir du jeu)
-    // Cela fonctionne si le jeu est l'écran au sommet de la pile GameStack.
-   navigation.goBack(); 
-    // 3. Naviguer vers l'écran DailyChallenge (le tab)
-    // On utilise la navigation du tab (MainTabs), qui est accessible depuis n'importe quel enfant.
-    // Assurez-vous que le nom de l'onglet est bien 'DailyChallenge' dans MainTabs.tsx
-    navigation.navigate('DailyChallenge' as any); 
+  onClose(); // Fermer le modal
+  
+  if (isDailyChallenge) {
+    // Attendre un peu pour éviter les conflits
+    setTimeout(() => {
+      // Utiliser notre service de navigation
+    //  DailyChallengeNavigation.getInstance().exitChallenge(navigation);
+    DailyChallengeNavigation.exitChallenge(navigation);
+    }, 100);
+  }
 };
+// AJOUTER cet effet pour nettoyer quand le modal se ferme
+React.useEffect(() => {
+  return () => {
+    // Quand le modal se démonte, vérifier si c'était un défi
+    if (isDailyChallenge) {
+      DailyChallengeNavigation.clearChallenge();
+    }
+  };
+}, [isDailyChallenge]);
+
   // On ne peut pas revenir avant le niveau 1
   //const showPrevButton = level > 1; 
   // On ne peut pas aller au-delà du dernier niveau

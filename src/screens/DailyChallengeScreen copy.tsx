@@ -9,7 +9,7 @@ import { useSettings } from '../hooks/useSettings';
 import { usePlayer } from '../hooks/usePlayer';
 import DailyChallengeService, { ChallengeStatus, DailyChallengeConfig } from '../services/DailyChallengeService';
 import { GameStackParamList } from '../navigation/types';
-import DailyChallengeNavigation from '../services/DailyChallengeNavigation'; // ⭐⭐⭐ GARDEZ CET IMPORT
+import DailyChallengeNavigation from '../services/DailyChallengeNavigation';
 
 // Calcul du temps restant jusqu'à minuit
 const getTimeUntilMidnight = () => {
@@ -43,6 +43,7 @@ const DailyChallengeScreen = () => {
         const todayChallenge = DailyChallengeService.getChallengeForToday();
         setChallenge(todayChallenge);
 
+        // Le type de retour de getStatus est maintenant ChallengeStatus
         const currentStatus = await DailyChallengeService.getStatus();
         setStatus(currentStatus);
       };
@@ -56,17 +57,44 @@ const DailyChallengeScreen = () => {
       const remaining = getTimeUntilMidnight();
       setTimeLeft(remaining);
       if (remaining <= 0) {
-        // Minuit passé, on recharge
+        // Minuit passé, on recharge (optionnel: forcer un reload)
       }
     }, 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // ⭐⭐⭐ CORRECTION : UTILISEZ DailyChallengeNavigation ⭐⭐⭐
+  // const handlePlayChallenge = () => {
+  //   if (!challenge) return;
+
+  //   // Navigation vers le jeu spécifique avec le flag isDailyChallenge
+  //   // @ts-ignore - TypeScript peut être strict ici mais les types sont bons
+
+  //   // navigation.navigate(challenge.gameId, { 
+  //   //   difficulty: challenge.difficulty, 
+  //   //   level: challenge.targetLevel,
+  //   //   isDailyChallenge: true // FLAG IMPORTANT
+  //   // });
+
+  //   navigation.navigate('Games', {
+  //     screen: challenge.gameId, // ex: 'MathRush'
+  //     params: {
+  //       difficulty: challenge.difficulty,
+  //       level: challenge.targetLevel,
+  //       isDailyChallenge: true
+  //     }
+  //   });
+  // };
+
+  // MODIFIER la fonction handlePlayChallenge :
+
   const handlePlayChallenge = () => {
     if (!challenge) return;
 
-    // Utilisez le service dédié pour une navigation propre
+    // ⭐⭐⭐ UTILISEZ LA NAVIGATION IMBRIQUÉE ⭐⭐⭐
+    // Important : nous naviguons d'abord vers l'onglet Games
+    // puis vers le jeu spécifique
+
+    // ⭐⭐⭐ UTILISEZ LE SERVICE DE NAVIGATION DÉDIÉ ⭐⭐⭐
     DailyChallengeNavigation.launchChallenge(navigation, challenge);
   };
 
@@ -78,8 +106,11 @@ const DailyChallengeScreen = () => {
     );
   }
 
+  // NOUVELLES VARIABLES DÉFINISSANT L'ÉTAT DE FIN
   const isPlayed = status === 'won' || status === 'lost';
-  const hasWon = status === 'won';
+  const hasWon = status === 'won'; // True si on a gagné, False si on a perdu ou pending
+
+
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -94,12 +125,14 @@ const DailyChallengeScreen = () => {
         style={[
           styles.card,
           {
+            // La bordure dépend du résultat !
             backgroundColor: isPlayed ? (hasWon ? theme.success + '20' : theme.error + '20') : theme.card,
             borderColor: isPlayed ? (hasWon ? theme.success : theme.error) : 'transparent',
             borderWidth: isPlayed ? 2 : 0
           }
         ]}
       >
+        {/* Icône Dynamique du Jeu (CORRECTION DE L'ICÔNE) */}
         <MaterialCommunityIcons
           name={isPlayed ? (hasWon ? "check-decagram" : "close-octagon") : challenge.icon as any}
           size={100}
@@ -108,6 +141,7 @@ const DailyChallengeScreen = () => {
         />
 
         <Text style={[styles.challengeTitle, { color: theme.text }]}>
+          {/* MESSAGE EN FONCTION DU RÉSULTAT (CORRECTION DU MESSAGE) */}
           {isPlayed ? (hasWon ? "Défi Accompli !" : "Défi Échoué") : challenge.gameName}
         </Text>
 
@@ -120,10 +154,12 @@ const DailyChallengeScreen = () => {
           }
         </Text>
 
+        {/* On affiche le timer seulement si le temps n'est pas écoulé ou si l'on est en attente */}
         {timeLeft > 0 && (
           <View style={styles.timerBox}>
             <MaterialCommunityIcons name="clock-outline" size={20} color={theme.text} />
             <Text style={[styles.timerText, { color: theme.text }]}>
+              {/* DÉBUT DE LA CORRECTION : Changer le libellé */}
               {isPlayed ? "Prochain défi dans : " : "Expire dans : "}
               {formatTime(timeLeft)}
             </Text>
@@ -131,11 +167,12 @@ const DailyChallengeScreen = () => {
         )}
 
         <View style={{ width: '100%', marginTop: 20 }}>
+
           <Button
             title={isPlayed ? "À demain !" : "Relever le défi"}
             onPress={handlePlayChallenge}
             color={isPlayed ? theme.secondary : theme.primary}
-            disabled={isPlayed || timeLeft <= 0}
+            disabled={isPlayed || timeLeft <= 0} // Désactiver si joué ou temps écoulé
           />
         </View>
       </MotiView>
@@ -200,7 +237,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 14,
     fontWeight: '600',
-    fontVariant: ['tabular-nums'],
+    fontVariant: ['tabular-nums'], // Empêche le texte de bouger quand les chiffres changent
   },
   statsContainer: {
     marginTop: 40,

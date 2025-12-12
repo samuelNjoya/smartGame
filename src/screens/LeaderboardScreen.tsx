@@ -101,7 +101,7 @@ const PerformanceCharts = ({ data, theme }: { data: any[], theme: any }) => {
           backgroundColor={"transparent"}
           paddingLeft={"15"}
           center={[10, 0]}
-          absolute
+       //   absolute // affiche les montants au lieu des pourcentages
         />
       </View>
     </ScrollView>
@@ -201,12 +201,7 @@ const LeaderboardScreen = () => {
       {/* NOUVEAU : Graphique Progression Hebdo (courbe) */}
       <WeeklyXpTrendChart />
 
-      {/* --- Graphiques --- */}
-      <View style={{ height: 230 }}> 
-        <PerformanceCharts data={filteredData} theme={theme} />
-      </View>
-
-     
+         
 
       {/* --- Filtres --- */}
       <View style={styles.filtersContainer}>
@@ -249,8 +244,13 @@ const LeaderboardScreen = () => {
         </TouchableOpacity>
       </View>
 
+       {/* --- Graphiques --- */}
+      <View style={{ height: 230 }}> 
+        <PerformanceCharts data={filteredData} theme={theme} />
+      </View>
+
       {/* --- Liste des Scores --- */}
-      <FlatList
+      {/* <FlatList
         data={filteredData}
         keyExtractor={(item) => item.id}
         renderItem={({ item, index }) => <ScoreItem item={item} index={index} theme={theme} />}
@@ -261,7 +261,7 @@ const LeaderboardScreen = () => {
             <Text style={{ color: theme.secondary, marginTop: 10 }}>Aucune partie jouée pour le moment.</Text>
           </View>
         }
-      />
+      /> */}
     </ScrollView>
   );
 };

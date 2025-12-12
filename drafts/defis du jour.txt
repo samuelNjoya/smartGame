@@ -1,7 +1,0 @@
-super maintenant il y'a plusieur probleme par raport au defi quotidient.
-
-1 lorsque le jeux est choisi aléatoirement a l'exemple de MathRush pour ce que j'ai eu a tester au lieu de 10 question qui a été configuré pour ça , ça affiche 11 question.
- 2- a la fin de la partie quand je gagne ça affiche encore les bouton precedent rejouer et suivant et debloque les autre niveau precedent automatiquement ce qui est un grand probleme ex je vient commencé le jeux je n'ai encore debloquer aucun niveau mais qaund je joue au jeux quotidien ça choisi le niveau 13 d'un jeu aléatoirement et quand je gagne le niveau le defis quotidient ça debloque tous les niveau precedent et meme le niveau 14.
-3.quand je gagne ça affiche un message defi accompli revenez demain pour un nouveau chalenge c'est bien . mais quand je per n'on seulement ça affiche aussi les bouton rejouer et quitter , et quand je reviens encore sur la page defis du jour j'ai encore la possibilité de jouer pourtant le defi du jour ce joue une seule fois. tout comme le message de success qu'on met pour me dire de revenir demain quand je gagne on devrai aussi m'afficher un message d'echec pour me dire de reveniraussi demain quand je perd.
-
-4 jai aussi un autre probleme a soulever quand je gagne ou perd je voudrais juste que le modal affiche les info du succes ou echec et un seul boutton quitter et quand je clique sur quitter ça ne me ramene plustot a la page du defis quotidien tu comprends mes probleme j'expert ?

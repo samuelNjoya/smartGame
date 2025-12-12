@@ -85,10 +85,10 @@ const GameEndModal = ({
 
     let baseXP = 0;
 
-     const processGameResult = async () => {
+    const processGameResult = async () => {
     // Si c'est un Défi Quotidien, marquer le défi comme joué immédiatement
     if (isDailyChallenge) {
-          const currentStatus = await DailyChallengeService.getStatus();
+          const currentStatus = await DailyChallengeService.getStatus(); //await 
       
       // Si le défi n'est plus "pending", ça veut dire qu'il a déjà été traité
       if (currentStatus !== 'pending') {
@@ -151,8 +151,8 @@ const GameEndModal = ({
       });
       setXpEarned(0); // Pas d'XP gagné en cas de défaite
     }
-  };
-  processGameResult();
+ };
+ processGameResult();
 
   }, [visible, isVictory, gameId, difficulty, level, isMultipleOf5, isMultipleOf10, score, gameStats, isDailyChallenge]); //, stars,
   // ...

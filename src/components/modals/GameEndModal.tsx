@@ -85,34 +85,22 @@ const GameEndModal = ({
 
     let baseXP = 0;
 
+     const processGameResult = async () => {
     // Si c'est un Défi Quotidien, marquer le défi comme joué immédiatement
     if (isDailyChallenge) {
+          const currentStatus = await DailyChallengeService.getStatus();
+      
+      // Si le défi n'est plus "pending", ça veut dire qu'il a déjà été traité
+      if (currentStatus !== 'pending') {
+        console.log('⚠️ Défi déjà traité, pas de nouvel enregistrement');
+        return; // On arrête ici, pas d'enregistrement double
+      }
+            // Sinon, on marque comme complété
       DailyChallengeService.completeChallenge(isVictory); // <-- CORRECTION 3: Joué, qu'on gagne ou perde isVictory
     }
 
     if (isVictory) {
-      // // Calcul de l'XP à donner
-      // baseXP = BASE_XP_REWARDS[difficulty];
-
-      // // Multiples de 5 donnent un double bonus
-      // if (isMultipleOf5) {
-      //   baseXP *= 2;
-      // }
-
-      // --- LOGIQUE XP ---
-      // if (isDailyChallenge) {
-      //   // SI C'EST UN DÉFI QUOTIDIEN : XP SPÉCIAL
-      //   baseXP = DailyChallengeService.BONUS_XP;
-      //   // Marquer comme complété dans le stockage
-      // //  DailyChallengeService.completeChallenge(); //pas d'appel ici
-
-      //   // Alert.alert("DÉFI RÉUSSI !", `Bravo ! Vous remportez le bonus de ${baseXP} XP !`);
-      // } else {
-      //   // SINON : XP NORMAL (votre logique existante)
-      //   baseXP = BASE_XP_REWARDS[difficulty];
-      //   if (isMultipleOf5) baseXP *= 2;
-      // }
-
+  
       if (isDailyChallenge) {
         baseXP = DailyChallengeService.BONUS_XP;
         // Pas d'appel à ProgressionService.saveLevelCompletion() ici (CORRECTION 2)
@@ -149,24 +137,9 @@ const GameEndModal = ({
         stats: { ...gameStats, isDailyChallenge },
       });
 
-
-      // Vérifier et enregistrer la progression
-      // const checkProgression = async () => {
-      //   const unlocked = await ProgressionService.saveLevelCompletion(gameId, difficulty, level); // , stars <-- MODIFIÉ pour inclure les étoiles
-      //   setIsNewLevelUnlocked(unlocked);
-
-      //   // Multiples de 10 déclenchent le modal de récompense aléatoire
-      //   if (isMultipleOf10) {
-      //     setTimeout(() => setShowRandomRewardModal(true), 500);
-      //   }
-      // };
-      // checkProgression();
-
     } else {
       // --- ENREGISTREMENT DANS LE CONTEXTE (Défaite) ---
       // Optionnel : Enregistrer la défaite pour les stats globales (taux de réussite)
-      // La perte de vie est gérée dans le composant de jeu ou par un appel direct à spendLife, 
-      // pas ici pour éviter la double déduction.
       addGameResult({
         gameId,
         difficulty,
@@ -178,9 +151,94 @@ const GameEndModal = ({
       });
       setXpEarned(0); // Pas d'XP gagné en cas de défaite
     }
+  };
+  processGameResult();
 
   }, [visible, isVictory, gameId, difficulty, level, isMultipleOf5, isMultipleOf10, score, gameStats, isDailyChallenge]); //, stars,
   // ...
+
+// Remplacer TOUT le useEffect actuel (lignes 65 à 166) par : le pb de navigation reaparais apres ça et pour le haut pb de doublon
+
+// ⭐⭐⭐ CORRECTION SIMPLE ET EFFICACE ⭐⭐⭐
+// React.useEffect(() => {
+//   // Ne rien faire si le modal n'est pas visible
+//   if (!visible) {
+//     hasRecordedResult.current = false;
+//     return;
+//   }
+
+//   // Si on a déjà enregistré le résultat, ne rien faire
+//   if (hasRecordedResult.current) {
+//     return;
+//   }
+
+//   // Marquer immédiatement que l'enregistrement est en cours
+//   hasRecordedResult.current = true;
+
+//   const processGameResult = async () => {
+//     // ⭐⭐⭐ CORRECTION CRITIQUE : Pour les défis quotidiens, vérifier d'abord l'état actuel ⭐⭐⭐
+//     if (isDailyChallenge) {
+//       const currentStatus = await DailyChallengeService.getStatus();
+      
+//       // Si le défi n'est plus "pending", ça veut dire qu'il a déjà été traité
+//       if (currentStatus !== 'pending') {
+//         console.log('⚠️ Défi déjà traité, pas de nouvel enregistrement');
+//         return; // On arrête ici, pas d'enregistrement double
+//       }
+      
+//       // Sinon, on marque comme complété
+//       DailyChallengeService.completeChallenge(isVictory);
+//     }
+
+//     if (isVictory) {
+//       let baseXP = 0;
+
+//       if (isDailyChallenge) {
+//         baseXP = DailyChallengeService.BONUS_XP;
+//         // Pour les défis, ne pas enregistrer dans la progression normale
+//       } else {
+//         baseXP = BASE_XP_REWARDS[difficulty];
+//         if (isMultipleOf5) baseXP *= 2;
+
+//         // Enregistrer la progression (Uniquement en mode CARRIÈRE)
+//         const unlocked = await ProgressionService.saveLevelCompletion(gameId, difficulty, level);
+//         setIsNewLevelUnlocked(unlocked);
+
+//         if (isMultipleOf10) {
+//           setTimeout(() => setShowRandomRewardModal(true), 500);
+//         }
+//       }
+
+//       // Application de l'XP au joueur
+//       setXpEarned(baseXP);
+//       addXP(baseXP);
+
+//       // Enregistrement dans le contexte
+//       addGameResult({
+//         gameId,
+//         difficulty,
+//         level,
+//         isVictory: true,
+//         score: baseXP,
+//         stats: { ...gameStats, isDailyChallenge },
+//       });
+
+//     } else {
+//       // Pour la défaite
+//       addGameResult({
+//         gameId,
+//         difficulty,
+//         level,
+//         isVictory: false,
+//         score: 0,
+//         stats: gameStats,
+//       });
+//       setXpEarned(0);
+//     }
+//   };
+
+//   processGameResult();
+// }, [visible, isVictory, gameId, difficulty, level, isMultipleOf5, isMultipleOf10,score,gameStats, isDailyChallenge]);
 
   // --- Fonctions de Navigation ---
   const handleNavigation = (targetLevel: number) => {

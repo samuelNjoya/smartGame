@@ -61,12 +61,12 @@ const NoLivesModal = ({ visible, onClose }: Props) => {
             <Text style={[styles.timer, { color: theme.primary }]}>{timeLeft}</Text>
           </View>
           
-          <Button
+          {/* <Button
             title="Recharger mes vies"
             onPress={rechargeLivesWithGame}
             disabled={!canRecharge || isRecharging}
             color={theme.primary}
-          />
+          /> */}
 
           {/* NOUVEAU BOUTON : Recharge complète contre 450 XP */}
           <View style={styles.buttonContainer}>

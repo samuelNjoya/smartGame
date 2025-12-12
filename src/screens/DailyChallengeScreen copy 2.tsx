@@ -10,7 +10,6 @@ import { usePlayer } from '../hooks/usePlayer';
 import DailyChallengeService, { ChallengeStatus, DailyChallengeConfig } from '../services/DailyChallengeService';
 import { GameStackParamList } from '../navigation/types';
 import DailyChallengeNavigation from '../services/DailyChallengeNavigation'; // ⭐⭐⭐ GARDEZ CET IMPORT
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Calcul du temps restant jusqu'à minuit
 const getTimeUntilMidnight = () => {
@@ -53,66 +52,26 @@ const DailyChallengeScreen = () => {
   );
 
   // Timer
-  // useEffect(() => {
-  //   const timer = setInterval(() => {
-  //     const remaining = getTimeUntilMidnight();
-  //     setTimeLeft(remaining);
-  //     if (remaining <= 0) {
-  //       console.log('🔄 Minuit passé ! Chargement du nouveau défi...');
-
-  //       try {
-  //         const todayChallenge = DailyChallengeService.getChallengeForToday();
-  //         setChallenge(todayChallenge);
-
-  //         const currentStatus =  DailyChallengeService.getStatus(); //await 
-  //         setStatus(currentStatus);
-  //       } catch (error) {
-  //         console.error('Erreur lors du rechargement du défi:', error);
-  //       }
-  //     }
-  //   }, 1000);
-  //   return () => clearInterval(timer);
-  // }, []);
-
-  // Timer avec double vérification
   useEffect(() => {
-    const checkAndRefresh = async () => {
-      const now = new Date();
-      const today = now.toDateString();
-
-      // Vérifier si le défi actuel est pour aujourd'hui
-      if (challenge) {
-        const challengeDate = new Date(challenge.date);
-        const isSameDay =
-          challengeDate.getFullYear() === now.getFullYear() &&
-          challengeDate.getMonth() === now.getMonth() &&
-          challengeDate.getDate() === now.getDate();
-
-        // Si le défi n'est pas pour aujourd'hui ET a été joué, le recharger
-        if (!isSameDay && (status === 'won' || status === 'lost')) {
-          console.log('🔄 Défi périmé, chargement du nouveau...');
-
-          const todayChallenge = DailyChallengeService.getChallengeForToday();
-          setChallenge(todayChallenge);
-
-          const newStatus = await DailyChallengeService.getStatus();
-          setStatus(newStatus);
-        }
-      }
-    };
-
     const timer = setInterval(() => {
       const remaining = getTimeUntilMidnight();
       setTimeLeft(remaining);
+      if (remaining <= 0) {
+        console.log('🔄 Minuit passé ! Chargement du nouveau défi...');
 
-      // Vérifier toutes les 10 secondes si on doit rafraîchir
-      if (Date.now() % 10000 < 1000) { // Toutes les ~10 secondes
-        checkAndRefresh();
+        try {
+          const todayChallenge = DailyChallengeService.getChallengeForToday();
+          setChallenge(todayChallenge);
+
+          const currentStatus =  DailyChallengeService.getStatus(); //await 
+          setStatus(currentStatus);
+        } catch (error) {
+          console.error('Erreur lors du rechargement du défi:', error);
+        }
       }
     }, 1000);
-
     return () => clearInterval(timer);
-  }, [challenge, status]); // Dépend des états qui changent
+  }, []);
 
   // ⭐⭐⭐ CORRECTION : UTILISEZ DailyChallengeNavigation ⭐⭐⭐
   const handlePlayChallenge = () => {
@@ -132,60 +91,6 @@ const DailyChallengeScreen = () => {
 
   const isPlayed = status === 'won' || status === 'lost';
   const hasWon = status === 'won';
-
-  // Fonction de debug
-// Dans DailyChallengeScreen.tsx, modifie la fonction de debug :
-const handleDebug = async () => {
-  console.log('=== DEBUG INFO ===');
-  console.log('Date actuelle:', new Date().toLocaleString());
-  console.log('TimeLeft:', timeLeft);
-  console.log('Challenge date:', challenge?.date);
-  
-  const status = await DailyChallengeService.getStatus();
-  console.log('Status from service:', status);
-  console.log('isPlayed:', status === 'won' || status === 'lost');
-  
-  // ⭐⭐⭐ TEST : Vérifier ce qui se passe si on simule demain
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
-  
-  const challengeDate = challenge ? new Date(challenge.date) : null;
-  const isSameDay = challengeDate ? 
-    challengeDate.getFullYear() === tomorrow.getFullYear() &&
-    challengeDate.getMonth() === tomorrow.getMonth() &&
-    challengeDate.getDate() === tomorrow.getDate() : false;
-  
-  console.log('Demain serait le:', tomorrow.toISOString().split('T')[0]);
-  console.log('Le défi serait pour demain?', isSameDay);
-  
-  // ⭐⭐⭐ TEST : Voir la clé de stockage actuelle
-  const todayStr = new Date().toISOString().split('T')[0];
-  const statusKey = `daily_challenge_status_${todayStr}`;
-  console.log('Clé de stockage actuelle:', statusKey);
-};
-
-const handleSimulateTomorrow = async () => {
-  console.log('🔄 Simulation de passage à demain...');
-  
-  // 1. Supprimer le statut d'aujourd'hui
-  const todayStr = new Date().toISOString().split('T')[0];
-  const statusKey = `daily_challenge_status_${todayStr}`;
-  await AsyncStorage.removeItem(statusKey);
-  
-  // 2. Forcer un nouveau défi (qui sera pour aujourd'hui, mais ça simule un nouveau jour)
-  const todayChallenge = DailyChallengeService.getChallengeForToday();
-  setChallenge(todayChallenge);
-  
-  // 3. Recharger le statut (devrait être 'pending' maintenant)
-  const newStatus = await DailyChallengeService.getStatus();
-  setStatus(newStatus);
-  
-  console.log('Nouveau statut après simulation:', newStatus);
-  
-  // 4. Remettre le timer à ~24h
-  setTimeLeft(getTimeUntilMidnight());
-};
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -245,26 +150,6 @@ const handleSimulateTomorrow = async () => {
           />
         </View>
       </MotiView>
-{/*     
-{__DEV__ && (
-  <View style={{ marginTop: 10 }}>
-    <Button
-      title="DEBUG: Voir les infos"
-      onPress={handleDebug}
-      color="#888"
-    />
-  </View>
-)} */}
-
-{/* {__DEV__ && (
-  <View style={{ marginTop: 10 }}>
-    <Button
-      title="DEBUG: Demain"
-      onPress={handleSimulateTomorrow}
-      color="#888"
-    />
-  </View>
-)} */}
 
       <View style={styles.statsContainer}>
         <View style={styles.statBox}>

@@ -11,6 +11,7 @@ export interface DailyChallengeConfig {
   targetLevel: number;
   bonusXp: number;
   icon: string;
+  date: string; // ⭐⭐⭐ AJOUTER CETTE PROPRIÉTÉ ⭐⭐⭐
 }
 
 export type ChallengeStatus = 'pending' | 'won' | 'lost';
@@ -120,7 +121,8 @@ const getChallengeForDate = (date: Date): DailyChallengeConfig => {
     icon: selectedGame.icon,
     difficulty,
     targetLevel: level,
-    bonusXp: BONUS_XP
+    bonusXp: BONUS_XP,
+     date: dateString // ⭐⭐⭐ AJOUTER LA DATE ⭐⭐⭐
   };
 };
 

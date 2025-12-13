@@ -315,7 +315,9 @@ const ProfileScreen = () => {
           <Text style={[styles.resetWarning, { color: theme.secondary }]}>
             ⚠️ Cette action est irréversible
           </Text>
+          
         </Animated.View>
+       
       </ScrollView>
 
       {/* Alert de confirmation pour la réinitialisation */}
@@ -496,6 +498,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
   },
+  
 });
 
 export default ProfileScreen;

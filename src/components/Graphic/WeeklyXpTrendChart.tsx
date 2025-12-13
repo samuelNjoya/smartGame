@@ -161,7 +161,7 @@ const WeeklyXpTrendChart = () => {
             },
           ],
         }}
-        width={width - 40}
+        width={width - 55}
         height={200}
         yAxisLabel=""
         yAxisSuffix=" XP"
@@ -224,9 +224,9 @@ const WeeklyXpTrendChart = () => {
         </View>
 
         <View style={styles.periodInfo}>
-          <Text style={[styles.periodText, { color: theme.secondary }]}>
+          {/* <Text style={[styles.periodText, { color: theme.secondary }]}>
             📅 Semaine du {last7Days[0].date} au {last7Days[6].date}
-          </Text>
+          </Text> */}
         </View>
       </View>
     </View>

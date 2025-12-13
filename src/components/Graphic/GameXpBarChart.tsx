@@ -135,7 +135,7 @@ const GameXpBarChart = () => {
       {/* SEULEMENT LE GRAPHIQUE EST ANIMÉ */}
       <BarChart
         data={chartData}
-        width={width - 40}
+        width={width - 55}
         height={220}
         yAxisLabel=""
         yAxisSuffix=" XP"
@@ -158,7 +158,7 @@ const GameXpBarChart = () => {
           },
         }}
         style={styles.chart}
-        verticalLabelRotation={-30}
+        verticalLabelRotation={-0} //important
       />
 
       {/* LES TEXTS EN DESSOUS RESTENT STATIQUES */}
@@ -166,7 +166,7 @@ const GameXpBarChart = () => {
         <View style={styles.insightRow}>
           <View style={[styles.colorDot, { backgroundColor: mostPlayed.color }]} />
           <Text style={[styles.insightText, { color: theme.text }]}>
-            <Text style={{ fontWeight: 'bold' }}>Jeu préféré</Text> : {mostPlayed.gameId} 
+            <Text style={{ fontWeight: 'bold' }}>Max XP</Text> : {mostPlayed.gameId} 
             ({mostPlayed.totalXp.toLocaleString()} XP - {mostPlayed.gameCount} parties)
           </Text>
         </View>

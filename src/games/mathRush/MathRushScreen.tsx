@@ -465,7 +465,7 @@ const MathRushScreen = ({ route, navigation }: Props) => {
 
                         {/* Statistiques (Score, Erreurs, Vies) */}
                         <View style={styles.statsRow}>
-                            <Text style={[styles.statText, { color: theme.text }]}>Score: {currentState.totalPoints}</Text>
+                            <Text style={[styles.statText, { color: theme.text }]}>{currentIndex + 1}/{problems.length}</Text>
                             <Text style={[styles.statText, { color: theme.error }]}>Erreurs: {currentState.errors}/3</Text>
                             <Text style={[styles.statText, { color: theme.primary }]}>Succès: {currentState.succèsConsécutifs}</Text>
                         </View>

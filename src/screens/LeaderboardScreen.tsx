@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, Dimensions, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, ScrollView } from 'react-native';
 import { useSettings } from '../hooks/useSettings';
 import { usePlayer } from '../hooks/usePlayer';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { LineChart, PieChart } from 'react-native-chart-kit';
-import { GameId, GameDifficulty } from '../constants/gameData';
+import { GameId } from '../constants/gameData';
 import GameXpBarChart from '../components/Graphic/GameXpBarChart';
 import WeeklyXpTrendChart from '../components/Graphic/WeeklyXpTrendChart';
 
@@ -14,11 +14,13 @@ const { width } = Dimensions.get('window');
 // --- TYPES ---
 type FilterType = 'All' | GameId;
 type SortType = 'date' | 'score';
+type ChartTab = 'progress' | 'ratio';
 
 // --- COMPOSANT: Carte de Graphique (Performance) ---
 const PerformanceCharts = ({ data, theme }: { data: any[], theme: any }) => {
+  const [activeTab, setActiveTab] = useState<ChartTab>('progress');
+
   // 1. SÉCURITÉ : On nettoie les données pour ne garder que celles avec un score valide
-  // Cela élimine les bugs causés par d'anciennes données de test corrompues
   const validData = data.filter(item => 
     typeof item.score === 'number' && !isNaN(item.score)
   );
@@ -32,20 +34,11 @@ const PerformanceCharts = ({ data, theme }: { data: any[], theme: any }) => {
     );
   }
 
-  // Préparation des données pour le Line Chart (10 dernières parties)
-  // On inverse pour avoir l'ordre chronologique (ancien -> récent)
-
-  // const recentGames = [...data].slice(0, 10).reverse();
-  // const scores = recentGames.map(d => d.score);
-
-  const recentGames = [...validData].slice(0, 10).reverse(); //1 ... 10 
+  const recentGames = [...validData].slice(0, 10).reverse();
   const scores = recentGames.map(d => d.score);
-
-  const labels = recentGames.map((_, i) => (i + 1).toString()); // 1, 2, 3...
-  
+  const labels = recentGames.map((_, i) => (i + 1).toString());
 
   // Préparation des données pour le Pie Chart (Taux de victoire)
-  // utiliser validData au lieu de data
   const wins = validData.filter(d => d.isVictory).length;
   const losses = validData.length - wins;
   
@@ -54,67 +47,138 @@ const PerformanceCharts = ({ data, theme }: { data: any[], theme: any }) => {
     { name: 'Défaites', population: losses, color: theme.error, legendFontColor: theme.text, legendFontSize: 12 },
   ];
 
+  // Définition des onglets
+  const tabs = [
+    {
+      id: 'progress' as ChartTab,
+      title: 'Progression',
+      icon: 'chart-line',
+      color: theme.primary
+    },
+    {
+      id: 'ratio' as ChartTab,
+      title: 'Performance',
+      icon: 'chart-pie',
+      color: theme.secondary
+    }
+  ];
+
   return (
-    <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={styles.chartScroll}>
-      {/* GRAPHIQUE 1 : Progression du Score 
-
-[Image of a line chart showing score progression over time]
- */}
-      <View style={[styles.chartCard, { backgroundColor: theme.card, width: width - 40 }]}>
-        <Text style={[styles.chartTitle, { color: theme.text }]}>📈 Progression du Score (10 dernières)</Text>
-        <LineChart
-          data={{
-            labels: labels,
-            datasets: [{ data: scores }]
-          }}
-          width={width - 60} 
-          height={180}
-          yAxisSuffix=""
-          chartConfig={{
-            backgroundColor: theme.card,
-            backgroundGradientFrom: theme.card,
-            backgroundGradientTo: theme.card,
-            decimalPlaces: 0,
-            color: (opacity = 1) => theme.primary,
-            labelColor: (opacity = 1) => theme.textSecondary,
-            propsForDots: { r: "4", strokeWidth: "2", stroke: theme.accent }
-          }}
-          bezier
-          style={{ borderRadius: 16 }}
-        />
+    <View style={styles.chartsWrapper}>
+      {/* Onglets de navigation */}
+      <View style={[styles.tabsContainer, { backgroundColor: theme.card + '40' }]}>
+        {tabs.map((tab) => (
+          <TouchableOpacity
+            key={tab.id}
+            style={[
+              styles.tabButton,
+              activeTab === tab.id && [
+                styles.activeTabButton,
+                { backgroundColor: theme.card, borderColor: tab.color }
+              ]
+            ]}
+            onPress={() => setActiveTab(tab.id)}
+          >
+            <MaterialCommunityIcons
+              name={tab.icon as any}
+              size={16}
+              color={activeTab === tab.id ? tab.color : theme.textSecondary}
+              style={styles.tabIcon}
+            />
+            <Text style={[
+              styles.tabText,
+              { color: activeTab === tab.id ? theme.text : theme.textSecondary }
+            ]}>
+              {tab.title}
+            </Text>
+            {activeTab === tab.id && (
+              <View style={[{ backgroundColor: tab.color }]} />
+            )}
+          </TouchableOpacity>
+        ))}
       </View>
 
-      {/* GRAPHIQUE 2 : Ratio Victoire/Défaite 
-
-[Image of a bar chart showing success rate by game type]
- */}
-      <View style={[styles.chartCard, { backgroundColor: theme.card, width: width - 40 }]}>
-        <Text style={[styles.chartTitle, { color: theme.text }]}>🏆 Taux de Réussite</Text>
-        <PieChart
-          data={pieData}
-          width={width - 60}
-          height={180}
-          chartConfig={{
-            color: (opacity = 1) => theme.text,
-          }}
-          accessor={"population"}
-          backgroundColor={"transparent"}
-          paddingLeft={"15"}
-          center={[10, 0]}
-       //   absolute // affiche les montants au lieu des pourcentages
-        />
+      {/* Contenu des graphiques */}
+      <View style={[styles.chartContent, { backgroundColor: theme.card }]}>
+        {activeTab === 'progress' ? (
+          <>
+            <View style={styles.chartHeader}>
+              <MaterialCommunityIcons name="chart-line" size={20} color={theme.primary} />
+              <Text style={[styles.chartTitle, { color: theme.text }]}>
+                 Progression du Score
+              </Text>
+            </View>
+            <View style={styles.chartWrapper}>
+              <LineChart
+                data={{
+                  labels: labels,
+                  datasets: [{ data: scores }]
+                }}
+                width={width - 60}
+                height={180}
+                yAxisSuffix=""
+                chartConfig={{
+                  backgroundColor: theme.card,
+                  backgroundGradientFrom: theme.card,
+                  backgroundGradientTo: theme.card,
+                  decimalPlaces: 0,
+                  color: (opacity = 1) => theme.primary,
+                  labelColor: (opacity = 1) => theme.textSecondary,
+                  propsForDots: { r: "4", strokeWidth: "2", stroke: theme.accent }
+                }}
+                bezier
+                style={{ borderRadius: 16 }}
+              />
+            </View>
+            <Text style={[styles.chartSubtitle, { color: theme.textSecondary }]}>
+              10 dernières parties
+            </Text>
+          </>
+        ) : (
+          <>
+            <View style={styles.chartHeader}>
+              <MaterialCommunityIcons name="chart-pie" size={20} color={theme.secondary} />
+              <Text style={[styles.chartTitle, { color: theme.text }]}>
+                Taux de Réussite
+              </Text>
+            </View>
+            <View style={styles.chartWrapper}>
+              <PieChart
+                data={pieData}
+                width={width - 60}
+                height={180}
+                chartConfig={{
+                  color: (opacity = 1) => theme.text,
+                }}
+                accessor={"population"}
+                backgroundColor={"transparent"}
+                paddingLeft={"15"}
+                center={[10, 0]}
+              />
+            </View>
+            <View style={styles.statsContainer}>
+              <View style={[styles.statItem, { borderRightWidth: 1, borderRightColor: theme.border }]}>
+                <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Victoires</Text>
+                <Text style={[styles.statValue, { color: theme.success }]}>{wins}</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Défaites</Text>
+                <Text style={[styles.statValue, { color: theme.error }]}>{losses}</Text>
+              </View>
+            </View>
+          </>
+        )}
       </View>
-    </ScrollView>
+    </View>
   );
 };
 
 // --- COMPOSANT: Ligne de Score (Liste) ---
 const ScoreItem = ({ item, index, theme }: any) => {
-  // Couleur du rang
   const getRankColor = (rank: number) => {
-    if (rank === 0) return '#FFD700'; // Or (1er)
-    if (rank === 1) return '#C0C0C0'; // Argent (2ème)
-    if (rank === 2) return '#CD7F32'; // Bronze (3ème)
+    if (rank === 0) return '#FFD700';
+    if (rank === 1) return '#C0C0C0';
+    if (rank === 2) return '#CD7F32';
     return theme.textSecondary;
   };
 
@@ -127,7 +191,6 @@ const ScoreItem = ({ item, index, theme }: any) => {
       transition={{ type: 'timing', duration: 300, delay: index * 50 }}
       style={[styles.scoreRow, { backgroundColor: theme.card, borderLeftColor: item.isVictory ? theme.success : theme.error }]}
     >
-      {/* Rang & Icône */}
       <View style={styles.rankCol}>
         <MaterialCommunityIcons 
           name={index < 3 ? "trophy" : "numeric"} 
@@ -137,7 +200,6 @@ const ScoreItem = ({ item, index, theme }: any) => {
         <Text style={[styles.rankText, { color: theme.text }]}>{index + 1}</Text>
       </View>
 
-      {/* Détails du Jeu */}
       <View style={styles.infoCol}>
         <Text style={[styles.gameTitle, { color: theme.text }]}>
           {item.gameId} <Text style={{ fontSize: 12, color: theme.secondary }}>({item.difficulty})</Text>
@@ -147,7 +209,6 @@ const ScoreItem = ({ item, index, theme }: any) => {
         </Text>
       </View>
 
-      {/* Score */}
       <View style={styles.scoreCol}>
         <Text style={[styles.scoreValue, { color: theme.primary }]}>{item.score}</Text>
         <Text style={[styles.xpLabel, { color: theme.textSecondary }]}>XP</Text>
@@ -159,51 +220,40 @@ const ScoreItem = ({ item, index, theme }: any) => {
 // --- ÉCRAN PRINCIPAL ---
 const LeaderboardScreen = () => {
   const { theme } = useSettings();
-  const { scoreHistory } = usePlayer(); // Récupération de l'historique depuis le contexte
+  const { scoreHistory } = usePlayer();
 
-  // États pour les filtres
   const [selectedGame, setSelectedGame] = useState<FilterType>('All');
-  const [sortBy, setSortBy] = useState<SortType>('date'); // 'date' ou 'score'
+  const [sortBy, setSortBy] = useState<SortType>('date');
 
-  // Filtrage et Tri des données (Memoized pour la performance)
   const filteredData = useMemo(() => {
     let data = [...scoreHistory];
 
-    // 1. Filtrer par jeu
     if (selectedGame !== 'All') {
       data = data.filter(item => item.gameId === selectedGame);
     }
 
-    // 2. Trier
     if (sortBy === 'score') {
-      data.sort((a, b) => b.score - a.score); // Score décroissant
+      data.sort((a, b) => b.score - a.score);
     } else {
-      data.sort((a, b) => b.date - a.date); // Date décroissante (plus récent d'abord)
+      data.sort((a, b) => b.date - a.date);
     }
 
     return data;
   }, [scoreHistory, selectedGame, sortBy]);
 
-  // Liste des jeux disponibles pour le filtre (Dynamique ou statique)
-  const filterOptions: FilterType[] = ['All','Memory', 'NeuroPuzzle', 'WordScramble', 'MathRush' ];
+  const filterOptions: FilterType[] = ['All','Memory', 'NeuroPuzzle', 'WordScramble', 'MathRush'];
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       
-      {/* --- En-tête --- */}
       <View style={styles.headerContainer}>
         <Text style={[styles.screenTitle, { color: theme.text }]}>Tableau de Bord</Text>
       </View>
 
-         {/* --- NOUVEAU : Graphique XP par Jeu --- */}
       <GameXpBarChart />
 
-      {/* NOUVEAU : Graphique Progression Hebdo (courbe) */}
       <WeeklyXpTrendChart />
 
-         
-
-      {/* --- Filtres --- */}
       <View style={styles.filtersContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
           {filterOptions.map((game) => (
@@ -228,7 +278,6 @@ const LeaderboardScreen = () => {
           ))}
         </ScrollView>
         
-        {/* Bouton de Tri */}
         <TouchableOpacity 
           style={[styles.sortButton, { backgroundColor: theme.card }]}
           onPress={() => setSortBy(prev => prev === 'date' ? 'score' : 'date')}
@@ -244,24 +293,10 @@ const LeaderboardScreen = () => {
         </TouchableOpacity>
       </View>
 
-       {/* --- Graphiques --- */}
-      <View style={{ height: 230 }}> 
+      <View >
         <PerformanceCharts data={filteredData} theme={theme} />
       </View>
-
-      {/* --- Liste des Scores --- */}
-      {/* <FlatList
-        data={filteredData}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => <ScoreItem item={item} index={index} theme={theme} />}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <MaterialCommunityIcons name="ghost" size={40} color={theme.secondary} />
-            <Text style={{ color: theme.secondary, marginTop: 10 }}>Aucune partie jouée pour le moment.</Text>
-          </View>
-        }
-      /> */}
+      
     </ScrollView>
   );
 };
@@ -278,26 +313,97 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
   },
-  // Styles Graphiques
-  chartScroll: {
-    paddingLeft: 20,
+  // Styles pour les onglets
+  chartsWrapper: {
     marginBottom: 10,
+    paddingHorizontal: 10,
   },
-  chartCard: {
+  tabsContainer: {
+    flexDirection: 'row',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 15,
+    // elevation: 1,
+    // shadowColor: '#000',
+    // shadowOpacity: 0.1,
+    // shadowRadius: 5,
+    // shadowOffset: { width: 0, height: 2 },
+  },
+  tabButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    position: 'relative',
+  },
+  activeTabButton: {
+    borderWidth: 1,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+  },
+  tabIcon: {
+    marginRight: 6,
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+ 
+  // Styles pour le contenu des graphiques
+  chartContent: {
     borderRadius: 16,
-    padding: 15,
-    marginRight: 15,
+    padding: 20,
     elevation: 3,
     shadowColor: '#000',
     shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+   // marginBottom:50,
+  },
+  chartHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
   },
   chartTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    fontWeight: '700',
+    marginLeft: 8,
+  },
+  chartWrapper: {
+    alignItems: 'center',
+   // marginBottom: 0,
+  },
+  chartSubtitle: {
+    fontSize: 12,
     textAlign: 'center',
+    marginTop: 5,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    //marginTop: 5,
+    paddingTop: 15,
+    borderTopWidth: 1,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 10,
+  },
+  statLabel: {
+    fontSize: 12,
+    marginBottom: 2,
+  },
+  statValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   // Styles Filtres
   filtersContainer: {
@@ -327,17 +433,13 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
   // Styles Liste
-  listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
   scoreRow: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
     borderRadius: 12,
     marginBottom: 10,
-    borderLeftWidth: 4, // Indicateur Victoire/Défaite
+    borderLeftWidth: 4,
     elevation: 2,
     shadowColor: '#000',
     shadowOpacity: 0.05,
@@ -374,10 +476,15 @@ const styles = StyleSheet.create({
   xpLabel: {
     fontSize: 10,
   },
-  emptyContainer: {
-    alignItems: 'center',
-    marginTop: 50,
-  }
+  chartCard: {
+    borderRadius: 16,
+    padding: 15,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+  },
 });
 
 export default LeaderboardScreen;

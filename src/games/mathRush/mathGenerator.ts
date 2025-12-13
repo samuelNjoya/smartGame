@@ -52,7 +52,7 @@ const generateProblem = (difficulty: GameDifficulty, problemId: number): MathPro
   let question: string;
   let numOptions = 4; // 4 choix par défaut
   let timeLimit = 15;
-  let baseXp = 2;//10
+  let baseXp = 0;//10
   
   // Progression dynamique des niveaux (nombre d'opérations et plages de nombres)
   const numProblems = getRandomInt(10, 20);
@@ -60,7 +60,7 @@ const generateProblem = (difficulty: GameDifficulty, problemId: number): MathPro
 
   switch (difficulty) {
     case 'easy':
-      timeLimit = 15; baseXp = 1; numOptions = 3;
+      timeLimit = 15; baseXp = 0; numOptions = 3;
       // Additions et Soustractions. Nombres jusqu'à 20 (début) à 50 (fin)
       const maxEasyNum = getRandomInt(20, 50);
       num1 = getRandomInt(1, maxEasyNum);
@@ -76,7 +76,7 @@ const generateProblem = (difficulty: GameDifficulty, problemId: number): MathPro
       break;
 
     case 'medium':
-      timeLimit = 10; baseXp = 1;
+      timeLimit = 10; baseXp = 0;
       // Multiplications, Additions/Soustractions plus larges. Nombres jusqu'à 100
       
       if (Math.random() < 0.3) { // 30% de Multiplications
@@ -100,7 +100,7 @@ const generateProblem = (difficulty: GameDifficulty, problemId: number): MathPro
       break;
 
     case 'hard':
-      timeLimit = 8; baseXp = 2;
+      timeLimit = 8; baseXp = 0;
       // Opérations mixtes (3 termes), Division
       const type = Math.random();
 
@@ -125,7 +125,7 @@ const generateProblem = (difficulty: GameDifficulty, problemId: number): MathPro
       break;
 
     case 'master':
-      timeLimit = 8; baseXp = 2;
+      timeLimit = 8; baseXp = 0;
       // Nombres négatifs, Carrés, Vitesse
       const masterType = Math.random();
       

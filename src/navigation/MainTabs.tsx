@@ -66,7 +66,7 @@ const MainTabs = () => {
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="trophy" color={color} size={size} />
           ),
-          title: 'Classement',
+          title: 'Statistiques',
         }}
       />
       <Tab.Screen

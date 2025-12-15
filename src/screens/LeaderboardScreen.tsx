@@ -82,12 +82,14 @@ const PerformanceCharts = ({ data, theme }: { data: any[], theme: any }) => {
             <MaterialCommunityIcons
               name={tab.icon as any}
               size={16}
-              color={activeTab === tab.id ? tab.color : theme.textSecondary}
+              //color={activeTab === tab.id ? tab.color : theme.textSecondary}
+              color={theme.text}
               style={styles.tabIcon}
             />
             <Text style={[
               styles.tabText,
-              { color: activeTab === tab.id ? theme.text : theme.textSecondary }
+              //{ color: activeTab === tab.id ? theme.text : theme.textSecondary }
+              { color: theme.text }
             ]}>
               {tab.title}
             </Text>
@@ -123,14 +125,14 @@ const PerformanceCharts = ({ data, theme }: { data: any[], theme: any }) => {
                   backgroundGradientTo: theme.card,
                   decimalPlaces: 0,
                   color: (opacity = 1) => theme.primary,
-                  labelColor: (opacity = 1) => theme.textSecondary,
+                  labelColor: (opacity = 1) => theme.text,
                   propsForDots: { r: "4", strokeWidth: "2", stroke: theme.accent }
                 }}
                 bezier
                 style={{ borderRadius: 16 }}
               />
             </View>
-            <Text style={[styles.chartSubtitle, { color: theme.textSecondary }]}>
+            <Text style={[styles.chartSubtitle, { color: theme.text }]}>
               10 dernières parties
             </Text>
           </>
@@ -158,11 +160,11 @@ const PerformanceCharts = ({ data, theme }: { data: any[], theme: any }) => {
             </View>
             <View style={styles.statsContainer}>
               <View style={[styles.statItem, { borderRightWidth: 1, borderRightColor: theme.border }]}>
-                <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Victoires</Text>
+                <Text style={[styles.statLabel, { color: theme.text }]}>Victoires</Text>
                 <Text style={[styles.statValue, { color: theme.success }]}>{wins}</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Défaites</Text>
+                <Text style={[styles.statLabel, { color: theme.text }]}>Défaites</Text>
                 <Text style={[styles.statValue, { color: theme.error }]}>{losses}</Text>
               </View>
             </View>
@@ -173,49 +175,6 @@ const PerformanceCharts = ({ data, theme }: { data: any[], theme: any }) => {
   );
 };
 
-// --- COMPOSANT: Ligne de Score (Liste) ---
-const ScoreItem = ({ item, index, theme }: any) => {
-  const getRankColor = (rank: number) => {
-    if (rank === 0) return '#FFD700';
-    if (rank === 1) return '#C0C0C0';
-    if (rank === 2) return '#CD7F32';
-    return theme.textSecondary;
-  };
-
-  const formattedDate = new Date(item.date).toLocaleDateString();
-
-  return (
-    <MotiView
-      from={{ opacity: 0, translateY: 20 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: 'timing', duration: 300, delay: index * 50 }}
-      style={[styles.scoreRow, { backgroundColor: theme.card, borderLeftColor: item.isVictory ? theme.success : theme.error }]}
-    >
-      <View style={styles.rankCol}>
-        <MaterialCommunityIcons 
-          name={index < 3 ? "trophy" : "numeric"} 
-          size={24} 
-          color={getRankColor(index)} 
-        />
-        <Text style={[styles.rankText, { color: theme.text }]}>{index + 1}</Text>
-      </View>
-
-      <View style={styles.infoCol}>
-        <Text style={[styles.gameTitle, { color: theme.text }]}>
-          {item.gameId} <Text style={{ fontSize: 12, color: theme.secondary }}>({item.difficulty})</Text>
-        </Text>
-        <Text style={[styles.dateText, { color: theme.textSecondary }]}>
-          Niveau {item.level} • {formattedDate}
-        </Text>
-      </View>
-
-      <View style={styles.scoreCol}>
-        <Text style={[styles.scoreValue, { color: theme.primary }]}>{item.score}</Text>
-        <Text style={[styles.xpLabel, { color: theme.textSecondary }]}>XP</Text>
-      </View>
-    </MotiView>
-  );
-};
 
 // --- ÉCRAN PRINCIPAL ---
 const LeaderboardScreen = () => {
@@ -433,49 +392,12 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
   // Styles Liste
-  scoreRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 10,
-    borderLeftWidth: 4,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-  },
-  rankCol: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: 50,
-  },
-  rankText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 5,
-  },
-  infoCol: {
-    flex: 1,
-  },
+
   gameTitle: {
     fontSize: 16,
     fontWeight: '600',
   },
-  dateText: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  scoreCol: {
-    alignItems: 'flex-end',
-  },
-  scoreValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  xpLabel: {
-    fontSize: 10,
-  },
+
   chartCard: {
     borderRadius: 16,
     padding: 15,

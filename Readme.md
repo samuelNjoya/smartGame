@@ -123,6 +123,9 @@ https://expo.dev/accounts/samuel24/projects/smart-games/builds/90d7f655-a456-48b
 lien final
 eas build -p android --profile preview  //lancer la generation d'un apk installable partout
 
+eas build --platform android --local //bluid local beacoups plus rapide Nécessite Android SDK / Java installé sur ton PC Rapide, gratuit, mais ça nécessite Android Studio installé.
+
+
 
 
 

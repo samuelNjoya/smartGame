@@ -270,18 +270,22 @@ const MathRushScreen = ({ route, navigation }: Props) => {
 
         let totalXp = currentState.totalPoints;
 
-        if (currentState.errors === 0) {
-            totalXp += 10;
-        }
+        // if (currentState.errors === 0) {
+        //     totalXp += 10;
+        // }
 
-        if (isVictory) {
-            addXP(totalXp);
-        }
+    //     if (isVictory) {
+    //         addXP(totalXp);
+
+    //          // Test direct
+    // console.log(`🎯 MathRush: Ajout XP directement`);
+    // addXP(50); // Test avec 50 XP
+    //     }
         // else {
         //     spendLife(1);
         // }
 
-        //  setCurrentState(prev => ({ ...prev, isGameOver: true, hasWonLevel: isVictory }));
+       //  setCurrentState(prev => ({ ...prev, isGameOver: true, hasWonLevel: isVictory }));
         // 2. Afficher le modal (MAINTENANT que le jeu est marqué comme terminé)
         // setModalVisible(true);
         // ⭐⭐⭐ DIRECTEMENT isGameOver, pas besoin de modalVisible ⭐⭐⭐
@@ -571,7 +575,7 @@ const MathRushScreen = ({ route, navigation }: Props) => {
                     difficulty={difficulty}
                     level={level}
                     isVictory={currentState.hasWonLevel}
-                    score={currentState.totalPoints}
+                    score={0}
                     gameStats={{
                         errors: currentState.errors,
                         succèsConsécutifs: currentState.succèsConsécutifs,
@@ -585,6 +589,7 @@ const MathRushScreen = ({ route, navigation }: Props) => {
                             isGameOver: false,
                             hasWonLevel: false
                         }));
+                        
 
                         // Pour les jeux normaux, réinitialiser
                         if (!isDailyChallenge) {

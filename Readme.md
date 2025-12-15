@@ -9,6 +9,8 @@ npx expo install moti lottie-react-native
 npx expo install react-native-vector-icons
 npx expo install @expo/vector-icons
 # (Pour MaterialCommunityIcons, suivez la configuration dans le lien de la doc expo)
+# Pour les effets de flou (optionnel mais recommandé)
+expo install expo-blur
 
 # Persistance
 npx expo install @react-native-async-storage/async-storage
@@ -97,6 +99,19 @@ https://tinypng.com
 # graph plus dependance
 npx expo install react-native-chart-kit react-native-svg
 
+# Analyse la taille du bundle
+npx expo-analyzer
+# pour verifier ce qui prend de la place
+npm install -g expo-analyzer
+
+# Voir les plus gros modules
+npx expo-analyzer --size
+# Arbre des dépendances
+npx expo-analyzer --tree
+# Suggestions d'optimisation
+npx expo-analyzer --suggest
+# Voir les dépendances les plus lourdes
+npx expo-analyzer --tree
 
 # pour installer  EAS expo application service
 npm install -g eas-cli

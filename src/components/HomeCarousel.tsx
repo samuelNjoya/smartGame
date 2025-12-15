@@ -257,8 +257,8 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: 10,
     marginHorizontal: 2,
-    marginTop: 20,
-    marginBottom: 20,
+    marginTop: 10,
+    marginBottom: 10,
     elevation: 3,
     shadowColor: '#000',
     shadowOpacity: 0.1,

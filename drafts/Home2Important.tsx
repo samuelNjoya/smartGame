@@ -11,7 +11,6 @@ import { MotiView } from 'moti';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MainStackParamList } from '../navigation/types';
-import { palette } from '../constants/theme';
 
 const { width } = Dimensions.get('window');
 
@@ -40,7 +39,7 @@ const LifeHearts = () => {
           setTimeLeft(formatTime(remaining));
         }
       };
-
+      
       updateTimer();
       const interval = setInterval(updateTimer, 1000);
       return () => clearInterval(interval);
@@ -77,11 +76,11 @@ const LifeHearts = () => {
             {lives}/{GAME_CONFIG.MAX_LIVES}
           </Text>
         </View>
-
+        
         <View style={styles.heartsVisual}>
           {hearts}
         </View>
-
+        
         {showTimer && (
           <View style={styles.timerContainer}>
             <MaterialCommunityIcons name="clock-outline" size={14} color={theme.primary} />
@@ -95,10 +94,30 @@ const LifeHearts = () => {
   );
 };
 
+// Carte de statistique
+const StatCard = ({ title, value, icon, color, suffix = '' }: any) => (
+  <MotiView
+    from={{ scale: 0.9, opacity: 0 }}
+    animate={{ scale: 1, opacity: 1 }}
+    transition={{ type: 'spring', delay: 100 }}
+    style={[styles.statCard, { backgroundColor: color + '15' }]}
+  >
+    <View style={[styles.statIconContainer, { backgroundColor: color + '30' }]}>
+      <MaterialCommunityIcons name={icon} size={24} color={color} />
+    </View>
+    <Text style={styles.statValue} numberOfLines={1}>
+      {value}{suffix}
+    </Text>
+    <Text style={styles.statLabel} numberOfLines={1}>
+      {title}
+    </Text>
+  </MotiView>
+);
+
 // Section titre avec animation
 const SectionHeader = ({ title, icon, onPress }: any) => {
   const { theme } = useSettings();
-
+  
   return (
     <View style={styles.sectionHeader}>
       <View style={styles.sectionTitleContainer}>
@@ -119,9 +138,16 @@ const SectionHeader = ({ title, icon, onPress }: any) => {
 };
 
 const HomeScreen = () => {
-  const { theme, isDark, } = useSettings();
+  const { theme, isDark,  } = useSettings();
   const { xp, } = usePlayer();
   const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
+  const [stats, setStats] = useState({
+    totalGames: 0,
+    winRate: 0,
+    bestStreak: 0,
+    totalPlayTime: 0,
+  });
+
 
 
   return (
@@ -129,9 +155,9 @@ const HomeScreen = () => {
       colors={isDark ? ['#0f0c29', '#302b63'] : ['#f8f9fa', '#e9ecef']}
       style={styles.container}
     >
-      <ScrollView
+      <ScrollView 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent,{backgroundColor:theme.background}]}
+        contentContainerStyle={styles.scrollContent}
       >
         {/* Header avec XP et Vies */}
         <View style={styles.header}>
@@ -150,7 +176,7 @@ const HomeScreen = () => {
                 <Text style={styles.levelText}>SG.</Text>
               </LinearGradient>
             </MotiView>
-
+            
             <View style={styles.xpContainer}>
               <LinearGradient
                 colors={['#667eea', '#764ba2']}
@@ -158,7 +184,7 @@ const HomeScreen = () => {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-
+                
               </LinearGradient>
               <View style={styles.xpTextContainer}>
                 <MaterialCommunityIcons name="star-four-points" size={20} color="#FFD700" />
@@ -168,7 +194,7 @@ const HomeScreen = () => {
               </View>
             </View>
           </View>
-
+          
           <LifeHearts />
         </View>
 
@@ -189,14 +215,49 @@ const HomeScreen = () => {
           </Text>
         </MotiView>
 
+        {/* Section Statistiques */}
+        <SectionHeader title="Vos Statistiques" icon="chart-box" />
+        
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.statsScroll}
+        >
+          <StatCard
+            title="Parties jouées"
+            value={stats.totalGames}
+            icon="gamepad-variant"
+            color="#4CAF50"
+          />
+          <StatCard
+            title="Taux de victoire"
+            value={stats.winRate}
+            icon="trophy"
+            color="#FF9800"
+            suffix="%"
+          />
+          <StatCard
+            title="Meilleur streak"
+            value={stats.bestStreak}
+            icon="fire"
+            color="#F44336"
+          />
+          <StatCard
+            title="Temps total"
+            value={stats.totalPlayTime}
+            icon="clock"
+            color="#2196F3"
+            suffix=" min"
+          />
+        </ScrollView>
 
         {/* Section Récompenses du jour */}
-        <SectionHeader
-          title="Récompenses disponibles"
+        <SectionHeader 
+          title="Récompenses disponibles" 
           icon="gift"
           onPress={() => navigation.navigate('DailyChallenge')}
         />
-
+        
         <View style={[styles.dailyRewardCard, { backgroundColor: theme.card }]}>
           <View style={styles.dailyRewardHeader}>
             <MaterialCommunityIcons name="calendar-star" size={24} color="#FFD700" />
@@ -207,7 +268,7 @@ const HomeScreen = () => {
           <Text style={[styles.dailyRewardText, { color: theme.secondary }]}>
             Terminez le défi d'aujourd'hui pour obtenir un bonus spécial et débloquer des récompenses exclusives !
           </Text>
-
+          
           <View style={styles.rewardBadges}>
             <View style={[styles.rewardBadge, { backgroundColor: '#4CAF50' + '20' }]}>
               <MaterialCommunityIcons name="star" size={16} color="#4CAF50" />
@@ -222,7 +283,7 @@ const HomeScreen = () => {
               </Text>
             </View>
           </View>
-
+          
           <TouchableOpacity
             style={[styles.dailyButton, { backgroundColor: theme.primary }]}
             onPress={() => navigation.navigate('DailyChallenge')}
@@ -234,161 +295,17 @@ const HomeScreen = () => {
 
         {/* Section Jeux populaires */}
         <SectionHeader title="Continuez votre aventure" icon="compass" />
-
+        
         {/* Carousel des jeux */}
         <HomeCarousel />
 
-
-
-        {/* Section Inspirante avec animation et gradient */}
-        <MotiView
-          from={{ opacity: 0, translateY: 30 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: 'spring', delay: 400 }}
-          style={styles.inspirationSection}
-        >
-          <LinearGradient
-            colors={theme.isDark ? ['#1a237e', '#311b92'] : ['#4f46e5', '#7c3aed']}
-            style={styles.inspirationGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            {/* Effet de particules animées */}
-            <View style={styles.particlesContainer}>
-              {[...Array(5)].map((_, i) => (
-                <MotiView
-                  key={i}
-                  from={{ opacity: 0, scale: 0, translateY: 0 }}
-                  animate={{
-                    opacity: [0, 0.5, 0],
-                    scale: [0, 1, 0],
-                    translateY: [-20, 20, -20],
-                  }}
-                  transition={{
-                    type: 'timing',
-                    duration: 3000 + i * 500,
-                    loop: true,
-                    delay: i * 300,
-                  }}
-                  style={[
-                    styles.particle,
-                    {
-                      left: `${15 + i * 15}%`,
-                      backgroundColor: ['#FFD700', '#FFA500', '#4CAF50', '#2196F3', '#9C27B0'][i],
-                    }
-                  ]}
-                />
-              ))}
-            </View>
-
-            {/* Icône centrale animée */}
-            <MotiView
-              from={{ rotate: '0deg', scale: 0.8 }}
-              animate={{ rotate: '360deg', scale: 1 }}
-              transition={{
-                rotate: { type: 'timing', duration: 20000, loop: true },
-                scale: { type: 'spring', delay: 200 },
-              }}
-              style={styles.brainIconContainer}
-            >
-              <LinearGradient
-                colors={['#FFD700', '#FFA500']}
-                style={styles.brainIconBackground}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <MaterialCommunityIcons name="brain" size={44} color="#FFFFFF" />
-              </LinearGradient>
-            </MotiView>
-
-            {/* Titre inspirant */}
-            <Text style={styles.inspirationTitle}>
-              🧠 Développez votre potentiel
-            </Text>
-
-            {/* Citation du jour */}
-            <View style={styles.quoteContainer}>
-              <MaterialCommunityIcons
-                name="format-quote-open"
-                size={24}
-                color="rgba(255,255,255,0.6)"
-                style={styles.quoteIconStart}
-              />
-
-              <Text style={styles.inspirationQuote}>
-                {[
-                  "L'intelligence n'est pas une capacité fixe, mais une compétence que l'on cultive chaque jour.",
-                  "Votre cerveau est comme un muscle : plus vous l'entraînez, plus il devient fort et agile.",
-                  "Chaque défi relevé crée de nouvelles connexions neuronales. Continuez à progresser !",
-                  "La persévérance cognitive transforme les obstacles en opportunités d'apprentissage.",
-                  "Les jeux ne sont pas juste du divertissement, ce sont des gymnases pour votre esprit.",
-                ][Math.floor(Math.random() * 5)]}
-              </Text>
-
-              <MaterialCommunityIcons
-                name="format-quote-close"
-                size={24}
-                color="rgba(255,255,255,0.6)"
-                style={styles.quoteIconEnd}
-              />
-            </View>
-
-            {/* Stats motivationnelles */}
-            <View style={styles.motivationStats}>
-              <View style={styles.statMotivationItem}>
-                <MaterialCommunityIcons name="lightning-bolt" size={20} color="#FFD700" />
-                <Text style={styles.statMotivationValue}>
-                  100%
-                </Text>
-                <Text style={styles.statMotivationLabel}>
-                  Réflexion
-                </Text>
-              </View>
-
-              <View style={styles.statDivider} />
-
-              <View style={styles.statMotivationItem}>
-                <MaterialCommunityIcons name="clock-fast" size={20} color="#4CAF50" />
-                <Text style={styles.statMotivationValue}>
-                  90%
-                </Text>
-                <Text style={styles.statMotivationLabel}>
-                  Temps de réaction
-                </Text>
-              </View>
-
-              <View style={styles.statDivider} />
-
-              <View style={styles.statMotivationItem}>
-                <MaterialCommunityIcons name="chart-bell-curve" size={20} color="#2196F3" />
-                <Text style={styles.statMotivationValue}>
-                  70%
-                </Text>
-                <Text style={styles.statMotivationLabel}>
-                  Prise de décision
-                </Text>
-              </View>
-            </View>
-
-            {/* Bouton d'action motivant */}
-            <TouchableOpacity
-              style={styles.continueButton}
-              activeOpacity={0.8}
-              onPress={() => navigation.navigate('Games')}
-            >
-              <LinearGradient
-                colors={['#FFD700', '#FFA500']}
-                style={StyleSheet.absoluteFill}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              />
-              <Text style={styles.continueButtonText}>
-                Continuer l'entraînement
-              </Text>
-              <MaterialCommunityIcons name="arrow-right" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          </LinearGradient>
-        </MotiView>
+        {/* Footer */}
+        <View style={styles.footer}>
+          <MaterialCommunityIcons name="brain" size={40} color={theme.secondary} />
+          <Text style={[styles.footerText, { color: theme.secondary }]}>
+            Chaque partie vous rapproche de l'excellence cognitive !
+          </Text>
+        </View>
       </ScrollView>
     </LinearGradient>
   );
@@ -517,8 +434,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    // marginBottom: 5,
-    // marginTop: 5,
+    marginBottom: 5,
+    marginTop: 5,
   },
   sectionTitleContainer: {
     flexDirection: 'row',
@@ -533,6 +450,35 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
+  statsScroll: {
+    paddingVertical: 8,
+    gap: 12,
+    paddingRight: 16,
+  },
+  statCard: {
+    width: 110,
+    padding: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    gap: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  statIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
   statLabel: {
     fontSize: 12,
     fontWeight: '500',
@@ -542,8 +488,7 @@ const styles = StyleSheet.create({
   dailyRewardCard: {
     borderRadius: 16,
     padding: 20,
-    marginBottom: 10,
-    marginTop: 5,
+    marginBottom: 20,
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -595,137 +540,59 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-
-
-  //style pour la derniere section
-  inspirationSection: {
-    borderRadius: 24,
-    overflow: 'hidden',
-    marginTop: 10,
-    marginBottom: 10,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 15,
+  goalsCard: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    elevation: 2,
   },
-  inspirationGradient: {
-    padding: 28,
+  goalItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    position: 'relative',
-    overflow: 'hidden',
+    gap: 16,
+    marginBottom: 20,
   },
-  particlesContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  particle: {
-    position: 'absolute',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    opacity: 0.3,
-  },
-  brainIconContainer: {
-    marginBottom: 10,
-  },
-  brainIconBackground: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  goalIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
   },
-  inspirationTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 16,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
-  },
-  quoteContainer: {
-    position: 'relative',
-    marginBottom: 24,
-  },
-  quoteIconStart: {
-    position: 'absolute',
-    top: -10,
-    left: -10,
-  },
-  quoteIconEnd: {
-    position: 'absolute',
-    bottom: -10,
-    right: -10,
-  },
-  inspirationQuote: {
-    fontSize: 15,
-    color: 'rgba(255, 255, 255, 0.95)',
-    textAlign: 'center',
-    lineHeight: 22,
-    fontStyle: 'italic',
-    paddingHorizontal: 20,
-  },
-  motivationStats: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  statMotivationItem: {
+  goalInfo: {
     flex: 1,
-    alignItems: 'center',
   },
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  goalTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 6,
   },
-  statMotivationValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginTop: 8,
+  goalProgressBar: {
+    height: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    borderRadius: 3,
+    overflow: 'hidden',
     marginBottom: 4,
   },
-  statMotivationLabel: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.8)',
-    textAlign: 'center',
+  goalProgressFill: {
+    height: '100%',
+    borderRadius: 3,
   },
-  continueButton: {
-    flexDirection: 'row',
+  goalProgressText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  footer: {
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 30,
-    borderRadius: 16,
-    gap: 12,
-    marginBottom: 10,
-    overflow: 'hidden',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    paddingVertical: 30,
+    paddingHorizontal: 20,
   },
-  continueButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
+  footerText: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 12,
+    lineHeight: 20,
   },
 });
 

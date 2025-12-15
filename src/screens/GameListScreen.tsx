@@ -18,7 +18,7 @@ import { GameStackParamList } from '../navigation/types';
 import { MaterialCommunityIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { GAMES } from '../constants/gameData';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
+//import { BlurView } from 'expo-blur';
 
 type Props = NativeStackScreenProps<GameStackParamList, 'GameList'>;
 
@@ -56,8 +56,8 @@ const headerScaleY = scrollY.interpolate({
   // Filtrer les jeux par catégorie
   const filteredGames = GAMES.filter(game => {
     if (selectedCategory === 'all') return true;
-    if (selectedCategory === 'math') return game.id.includes('Math') || game.category === 'math';
-    if (selectedCategory === 'word') return game.id.includes('Word') || game.category === 'word';
+    if (selectedCategory === 'math') return game.id.includes('Math');
+    if (selectedCategory === 'word') return game.id.includes('Word');
     if (selectedCategory === 'puzzle') return game.id.includes('Memory') || game.id.includes('Neuro');
     if (selectedCategory === 'fast') return game.timeBased;
     return true;
@@ -179,7 +179,7 @@ const headerScaleY = scrollY.interpolate({
             {/* Badge de difficulté */}
             <View style={styles.difficultyBadge}>
               <Text style={styles.difficultyText}>
-                {game.difficulty === 'hard' ? '🔥' : '⭐'} {game.difficulty || 'VARIABLE'}
+                {game.difficulty === 'hard' ? '🔥' : '⭐'} {game.name || 'VARIABLE'}
               </Text>
             </View>
 
@@ -201,7 +201,7 @@ const headerScaleY = scrollY.interpolate({
               </View>
               <View style={styles.statItem}>
                 <Ionicons name="trophy-outline" size={14} color="#FFFFFF" />
-                <Text style={styles.statText}>{game.maxLevel || '10'} lvls</Text>
+                <Text style={styles.statText}>{game.maxLevel || '525'} lvls</Text>
               </View>
             </View>
           </LinearGradient>
@@ -229,7 +229,7 @@ const headerScaleY = scrollY.interpolate({
             styles.categoryButton,
             {
               backgroundColor: isActive ? theme.primary : 'transparent',
-              borderColor: isActive ? theme.primary : theme.border,
+              borderColor: isActive ? theme.primary : theme.secondary,
               transform: [{ scale: scaleAnim }],
             },
           ]}

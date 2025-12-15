@@ -8,12 +8,12 @@ export const MAX_LEVELS = {
 };
 
 export const GAMES = [
-  { id: 'Memory', name: 'Memory', icon: 'cards' },
+  { id: 'Memory', name: 'Memory', icon: 'cards',description:'Testez votre mémoire visuelle en retrouvant les paires de cartes identiques.' },
   // { id: 'Quiz', name: 'Quiz de Culture Générale', icon: 'lightbulb-on' },
   // { id: 'Snake', name: 'Snake', icon: 'snake' },
-  { id: 'NeuroPuzzle', name: 'NeuroPuzzle', icon: 'brain' }, // AJOUT (Utilisez une icône MaterialCommunityIcons valide comme 'brain')
-  { id: 'WordScramble', name: 'Mots Mêlés', icon: 'format-letter-case' }, // AJOUT pour afficher dans la liste des jeux
-  { id: 'MathRush', name: 'Calcul Express', icon: 'calculator' }, // AJOUT
+  { id: 'NeuroPuzzle', name: 'NeuroPuzzle', icon: 'brain',description:'Stimulez votre cerveau avec des énigmes logiques et des casse-têtes complexes.' }, // AJOUT (Utilisez une icône MaterialCommunityIcons valide comme 'brain')
+  { id: 'WordScramble', name: 'Mots Mêlés', icon: 'format-letter-case',description:'Reconstituez les mots à partir de lettres mélangées. Testez votre vocabulaire!' }, // AJOUT pour afficher dans la liste des jeux
+  { id: 'MathRush', name: 'Calcul Express', icon: 'calculator',description:'Résolvez des opérations mathématiques dans un temps limité. Rapidité et précision!' }, // AJOUT
  // { id: 'WordGuess', name: 'Devine le Mot', icon: 'format-text-variant' }, // AJOUT a completer plutart
   // Ajoutez d'autres jeux ici
 ];

@@ -1,27 +1,27 @@
+// src/screens/DailyChallengeScreen.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Button, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { useSettings } from '../hooks/useSettings';
 import { usePlayer } from '../hooks/usePlayer';
 import DailyChallengeService, { ChallengeStatus, DailyChallengeConfig } from '../services/DailyChallengeService';
 import { GameStackParamList } from '../navigation/types';
-import DailyChallengeNavigation from '../services/DailyChallengeNavigation'; // ⭐⭐⭐ GARDEZ CET IMPORT
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import DailyChallengeNavigation from '../services/DailyChallengeNavigation';
 
-// Calcul du temps restant jusqu'à minuit
+const { width } = Dimensions.get('window');
+
 const getTimeUntilMidnight = () => {
   const now = new Date();
   const midnight = new Date();
   midnight.setHours(24, 0, 0, 0);
   return Math.floor((midnight.getTime() - now.getTime()) / 1000);
-  //return 10;
 };
 
-// Formatage HH:MM:SS
 const formatTime = (totalSeconds: number) => {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -30,7 +30,7 @@ const formatTime = (totalSeconds: number) => {
 };
 
 const DailyChallengeScreen = () => {
-  const { theme, fontSize } = useSettings();
+  const { theme, } = useSettings();
   const { lives, xp } = usePlayer();
   const navigation = useNavigation<NativeStackNavigationProp<GameStackParamList>>();
 
@@ -38,13 +38,11 @@ const DailyChallengeScreen = () => {
   const [status, setStatus] = useState<ChallengeStatus | 'loading'>('loading');
   const [timeLeft, setTimeLeft] = useState(getTimeUntilMidnight());
 
-  // Recharger le statut à chaque fois qu'on revient sur l'écran
   useFocusEffect(
     useCallback(() => {
       const loadData = async () => {
         const todayChallenge = DailyChallengeService.getChallengeForToday();
         setChallenge(todayChallenge);
-
         const currentStatus = await DailyChallengeService.getStatus();
         setStatus(currentStatus);
       };
@@ -52,80 +50,44 @@ const DailyChallengeScreen = () => {
     }, [])
   );
 
-  // Timer
-  // useEffect(() => {
-  //   const timer = setInterval(() => {
-  //     const remaining = getTimeUntilMidnight();
-  //     setTimeLeft(remaining);
-  //     if (remaining <= 0) {
-  //       console.log('🔄 Minuit passé ! Chargement du nouveau défi...');
-
-  //       try {
-  //         const todayChallenge = DailyChallengeService.getChallengeForToday();
-  //         setChallenge(todayChallenge);
-
-  //         const currentStatus =  DailyChallengeService.getStatus(); //await 
-  //         setStatus(currentStatus);
-  //       } catch (error) {
-  //         console.error('Erreur lors du rechargement du défi:', error);
-  //       }
-  //     }
-  //   }, 1000);
-  //   return () => clearInterval(timer);
-  // }, []);
-
-  // Timer avec double vérification
   useEffect(() => {
-    const checkAndRefresh = async () => {
-      const now = new Date();
-      const today = now.toDateString();
+    const timer = setInterval(() => {
+      const remaining = getTimeUntilMidnight();
+      setTimeLeft(remaining);
 
-      // Vérifier si le défi actuel est pour aujourd'hui
-      if (challenge) {
+      if (challenge && (status === 'won' || status === 'lost')) {
+        const now = new Date();
         const challengeDate = new Date(challenge.date);
         const isSameDay =
           challengeDate.getFullYear() === now.getFullYear() &&
           challengeDate.getMonth() === now.getMonth() &&
           challengeDate.getDate() === now.getDate();
 
-        // Si le défi n'est pas pour aujourd'hui ET a été joué, le recharger
-        if (!isSameDay && (status === 'won' || status === 'lost')) {
-          console.log('🔄 Défi périmé, chargement du nouveau...');
-
-          const todayChallenge = DailyChallengeService.getChallengeForToday();
-          setChallenge(todayChallenge);
-
-          const newStatus = await DailyChallengeService.getStatus();
-          setStatus(newStatus);
+        if (!isSameDay) {
+          DailyChallengeService.getChallengeForToday();
+          DailyChallengeService.getStatus().then(setStatus);
         }
       }
-    };
-
-    const timer = setInterval(() => {
-      const remaining = getTimeUntilMidnight();
-      setTimeLeft(remaining);
-
-      // Vérifier toutes les 10 secondes si on doit rafraîchir
-      if (Date.now() % 10000 < 1000) { // Toutes les ~10 secondes
-        checkAndRefresh();
-      }
     }, 1000);
-
     return () => clearInterval(timer);
-  }, [challenge, status]); // Dépend des états qui changent
+  }, [challenge, status]);
 
-  // ⭐⭐⭐ CORRECTION : UTILISEZ DailyChallengeNavigation ⭐⭐⭐
   const handlePlayChallenge = () => {
     if (!challenge) return;
-
-    // Utilisez le service dédié pour une navigation propre
     DailyChallengeNavigation.launchChallenge(navigation, challenge);
   };
 
   if (status === 'loading' || !challenge) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color={theme.primary} />
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <MotiView
+          from={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          style={styles.loadingCard}
+        >
+          <MaterialCommunityIcons name="loading" size={60} color={theme.primary} />
+          <Text style={[styles.loadingText, { color: theme.text }]}>Chargement du défi...</Text>
+        </MotiView>
       </View>
     );
   }
@@ -133,149 +95,156 @@ const DailyChallengeScreen = () => {
   const isPlayed = status === 'won' || status === 'lost';
   const hasWon = status === 'won';
 
-  // Fonction de debug
-// Dans DailyChallengeScreen.tsx, modifie la fonction de debug :
-const handleDebug = async () => {
-  console.log('=== DEBUG INFO ===');
-  console.log('Date actuelle:', new Date().toLocaleString());
-  console.log('TimeLeft:', timeLeft);
-  console.log('Challenge date:', challenge?.date);
-  
-  const status = await DailyChallengeService.getStatus();
-  console.log('Status from service:', status);
-  console.log('isPlayed:', status === 'won' || status === 'lost');
-  
-  // ⭐⭐⭐ TEST : Vérifier ce qui se passe si on simule demain
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
-  
-  const challengeDate = challenge ? new Date(challenge.date) : null;
-  const isSameDay = challengeDate ? 
-    challengeDate.getFullYear() === tomorrow.getFullYear() &&
-    challengeDate.getMonth() === tomorrow.getMonth() &&
-    challengeDate.getDate() === tomorrow.getDate() : false;
-  
-  console.log('Demain serait le:', tomorrow.toISOString().split('T')[0]);
-  console.log('Le défi serait pour demain?', isSameDay);
-  
-  // ⭐⭐⭐ TEST : Voir la clé de stockage actuelle
-  const todayStr = new Date().toISOString().split('T')[0];
-  const statusKey = `daily_challenge_status_${todayStr}`;
-  console.log('Clé de stockage actuelle:', statusKey);
-};
-
-const handleSimulateTomorrow = async () => {
-  console.log('🔄 Simulation de passage à demain...');
-  
-  // 1. Supprimer le statut d'aujourd'hui
-  const todayStr = new Date().toISOString().split('T')[0];
-  const statusKey = `daily_challenge_status_${todayStr}`;
-  await AsyncStorage.removeItem(statusKey);
-  
-  // 2. Forcer un nouveau défi (qui sera pour aujourd'hui, mais ça simule un nouveau jour)
-  const todayChallenge = DailyChallengeService.getChallengeForToday();
-  setChallenge(todayChallenge);
-  
-  // 3. Recharger le statut (devrait être 'pending' maintenant)
-  const newStatus = await DailyChallengeService.getStatus();
-  setStatus(newStatus);
-  
-  console.log('Nouveau statut après simulation:', newStatus);
-  
-  // 4. Remettre le timer à ~24h
-  setTimeLeft(getTimeUntilMidnight());
-};
-
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <Text style={[styles.title, { color: theme.text, fontSize: fontSize + 8 }]}>
-        Défi du Jour
-      </Text>
+      {/* Header avec titre */}
+      <MotiView
+        from={{ translateY: -20, opacity: 0 }}
+        animate={{ translateY: 0, opacity: 1 }}
+        style={styles.header}
+      >
+        <MaterialCommunityIcons
+          name="trophy"
+          size={32}
+          color={theme.primary}
+          style={styles.trophyIcon}
+        />
+        <Text style={[styles.title, { color: theme.text }]}>Défi Quotidien</Text>
+        <Text style={[styles.subtitle, { color: theme.secondary }]}>
+          Une nouvelle aventure chaque jour
+        </Text>
+      </MotiView>
 
+      {/* Carte principale du défi */}
       <MotiView
         from={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ type: 'spring' }}
-        style={[
-          styles.card,
-          {
-            backgroundColor: isPlayed ? (hasWon ? theme.success + '20' : theme.error + '20') : theme.card,
-            borderColor: isPlayed ? (hasWon ? theme.success : theme.error) : 'transparent',
-            borderWidth: isPlayed ? 2 : 0
-          }
-        ]}
+        transition={{ type: 'spring', delay: 100 }}
+        style={[styles.mainCard, { backgroundColor: theme.card }]}
       >
-        <MaterialCommunityIcons
-          name={isPlayed ? (hasWon ? "check-decagram" : "close-octagon") : challenge.icon as any}
-          size={100}
-          color={isPlayed ? (hasWon ? theme.success : theme.error) : theme.primary}
-          style={{ marginBottom: 20 }}
-        />
-
-        <Text style={[styles.challengeTitle, { color: theme.text }]}>
-          {isPlayed ? (hasWon ? "Défi Accompli !" : "Défi Échoué") : challenge.gameName}
-        </Text>
-
-        <Text style={[styles.challengeDesc, { color: theme.secondary, fontSize: fontSize }]}>
-          {isPlayed
-            ? (hasWon
-              ? "Félicitations ! Revenez demain pour un nouveau challenge."
-              : "Dommage ! Vous pourrez retenter votre chance demain.")
-            : `Terminez le niveau ${challenge.targetLevel} en mode **${challenge.difficulty.toUpperCase()}** pour gagner ${challenge.bonusXp} XP !`
+        {/* Badge de statut */}
+        <View style={[
+          styles.statusBadge,
+          {
+            backgroundColor: isPlayed
+              ? (hasWon ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)')
+              : 'rgba(33, 150, 243, 0.1)',
+            borderColor: isPlayed
+              ? (hasWon ? theme.success : theme.error)
+              : theme.primary
           }
-        </Text>
+        ]}>
+          <MaterialCommunityIcons
+            name={isPlayed ? (hasWon ? "trophy" : "close-circle") : "clock-outline"}
+            size={16}
+            color={isPlayed ? (hasWon ? theme.success : theme.error) : theme.primary}
+          />
+          <Text style={[
+            styles.statusText,
+            { color: isPlayed ? (hasWon ? theme.success : theme.error) : theme.primary }
+          ]}>
+            {isPlayed ? (hasWon ? "ACCOMPLI" : "ÉCHOUÉ") : "EN ATTENTE"}
+          </Text>
+        </View>
 
-        {timeLeft > 0 && (
-          <View style={styles.timerBox}>
-            <MaterialCommunityIcons name="clock-outline" size={20} color={theme.text} />
-            <Text style={[styles.timerText, { color: theme.text }]}>
-              {isPlayed ? "Prochain défi dans : " : "Expire dans : "}
+        {/* Icône du jeu */}
+        <View style={styles.iconContainer}>
+          <MaterialCommunityIcons
+            name={isPlayed ? (hasWon ? "check-decagram" : "close-octagon") : challenge.icon as any}
+            size={100}
+            color={isPlayed ? (hasWon ? theme.success : theme.error) : theme.primary}
+            style={{ marginBottom: 2 }}
+          />
+
+          <Text style={[styles.challengeTitle, { color: theme.text }]}>
+            {isPlayed ? (hasWon ? "Défi Accompli !" : "Défi Échoué") : challenge.gameName}
+          </Text>
+        </View>
+
+        {/* Informations du défi */}
+        <Text style={[styles.challengeDesc, { color: theme.secondary,  }]}>
+                  {isPlayed
+                    ? (hasWon
+                      ? "Félicitations ! Revenez demain pour un nouveau challenge."
+                      : "Dommage ! Vous pourrez retenter votre chance demain.")
+                    : `Terminez le niveau ${challenge.targetLevel} en mode **${challenge.difficulty.toUpperCase()}** pour gagner ${challenge.bonusXp} XP !`
+                  }
+                </Text>
+
+        {/* Timer */}
+        <View style={styles.timerContainer}>
+          <MaterialCommunityIcons
+            name="clock-fast"
+            size={24}
+            color={theme.primary}
+          />
+            <Text style={[styles.timerLabel, { color: theme.secondary }]}>
+              {isPlayed ? "Prochain défi dans" : "Temps restant"}
+            </Text>
+            <Text style={[styles.timerValue, { color: theme.text }]}>
               {formatTime(timeLeft)}
             </Text>
-          </View>
-        )}
 
-        <View style={{ width: '100%', marginTop: 20 }}>
-          <Button
-            title={isPlayed ? "À demain !" : "Relever le défi"}
-            onPress={handlePlayChallenge}
-            color={isPlayed ? theme.secondary : theme.primary}
-            disabled={isPlayed || timeLeft <= 0}
+        </View>
+
+        {/* Bouton d'action */}
+        <TouchableOpacity
+          onPress={handlePlayChallenge}
+          disabled={isPlayed}
+          style={[
+            styles.actionButton,
+            {
+              backgroundColor: isPlayed ? theme.secondary : theme.primary,
+              opacity: isPlayed ? 0.6 : 1
+            }
+          ]}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.buttonText}>
+            {isPlayed ? "Défi Terminé" : "Commencer le Défi"}
+          </Text>
+          <MaterialCommunityIcons
+            name={isPlayed ? "check-circle" : "play-circle"}
+            size={24}
+            color="#FFFFFF"
+            style={styles.buttonIcon}
           />
+        </TouchableOpacity>
+      </MotiView>
+
+      {/* Stats du joueur */}
+      <MotiView
+        from={{ translateY: 20, opacity: 0 }}
+        animate={{ translateY: 0, opacity: 1 }}
+        transition={{ delay: 200 }}
+        style={[styles.statsCard, , { backgroundColor: theme.card }]}
+      >
+        <View style={styles.statsGrid}>
+          <View style={styles.statItem}>
+            <MaterialCommunityIcons name="heart" size={28} color={theme.error} />
+            <Text style={[styles.statValue, { color: theme.text }]}>{lives}</Text>
+            <Text style={[styles.statLabel, { color: theme.secondary }]}>Vies</Text>
+          </View>
+
+          <View style={styles.statDivider} />
+
+          <View style={styles.statItem}>
+            <MaterialCommunityIcons name="star-four-points" size={28} color="#FFD700" />
+            <Text style={[styles.statValue, { color: theme.text }]}>{xp}</Text>
+            <Text style={[styles.statLabel, { color: theme.secondary }]}>XP</Text>
+          </View>
+
+          <View style={styles.statDivider} />
+
+          <View style={styles.statItem}>
+            <MaterialCommunityIcons name="calendar-check" size={28} color={theme.primary} />
+            <Text style={[styles.statValue, { color: theme.text }]}>
+              {status === 'won' ? '1' : '0'}/1
+            </Text>
+            <Text style={[styles.statLabel, { color: theme.secondary }]}>Défi</Text>
+          </View>
         </View>
       </MotiView>
-{/*     
-{__DEV__ && (
-  <View style={{ marginTop: 10 }}>
-    <Button
-      title="DEBUG: Voir les infos"
-      onPress={handleDebug}
-      color="#888"
-    />
-  </View>
-)} */}
-
-{/* {__DEV__ && (
-  <View style={{ marginTop: 10 }}>
-    <Button
-      title="DEBUG: Demain"
-      onPress={handleSimulateTomorrow}
-      color="#888"
-    />
-  </View>
-)} */}
-
-      <View style={styles.statsContainer}>
-        <View style={styles.statBox}>
-          <MaterialCommunityIcons name="heart" size={24} color={theme.error} />
-          <Text style={[styles.statsText, { color: theme.text }]}>{lives}</Text>
-        </View>
-        <View style={styles.statBox}>
-          <MaterialCommunityIcons name="star" size={24} color={theme.accent} />
-          <Text style={[styles.statsText, { color: theme.text }]}>{xp} XP</Text>
-        </View>
-      </View>
     </View>
   );
 };
@@ -283,64 +252,155 @@ const handleSimulateTomorrow = async () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 20,
+  },
+  loadingCard: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 20,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  header: {
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 10,
+  },
+  trophyIcon: {
+    marginBottom: 5,
   },
   title: {
-    fontWeight: 'bold',
-    marginBottom: 30,
-  },
-  card: {
-    width: '100%',
-    borderRadius: 20,
-    padding: 30,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  challengeTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 10,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  mainCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
+    marginBottom: 20,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 20,
+    gap: 6,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  iconContainer: {
+    alignItems: 'center',
+   // marginVertical: 2,
+  },
+  
+   challengeTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 2,
     textAlign: 'center',
   },
   challengeDesc: {
     textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 24,
+    //lineHeight: 2,
     paddingHorizontal: 10,
   },
-  timerBox: {
+  gameName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    textAlign: 'center',
+  },
+  timerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.05)',
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.03)',
+    padding: 10,
+    borderRadius: 16,
     marginBottom: 10,
+    marginTop:2,
+    gap: 12,
   },
-  timerText: {
-    marginLeft: 8,
+  timerLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  timerValue: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: 'bold',
     fontVariant: ['tabular-nums'],
   },
-  statsContainer: {
-    marginTop: 40,
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  buttonIcon: {
+    marginLeft: 8,
+  },
+  statsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  statsGrid: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    width: '80%',
-  },
-  statBox: {
     alignItems: 'center',
-    gap: 5
   },
-  statsText: {
-    fontSize: 18,
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  statValue: {
+    fontSize: 16,
     fontWeight: 'bold',
+    marginTop: 5,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: '500',
   },
 });
 

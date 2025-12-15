@@ -216,7 +216,7 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
           difficulty={difficulty}
           level={level}
           isVictory={hasWon}
-        //  score={0} // ⭐⭐⭐ AJOUTEZ UN SCORE SI VOUS EN AVEZ UN ⭐⭐⭐
+        
           gameStats={{
             moves: moves,
             maxMoves: maxMoves,

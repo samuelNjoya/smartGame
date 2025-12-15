@@ -293,7 +293,7 @@ const LeaderboardScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <View >
+      <View style={{ paddingHorizontal:10 }}>
         <PerformanceCharts data={filteredData} theme={theme} />
       </View>
       

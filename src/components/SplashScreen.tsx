@@ -1,253 +1,299 @@
 // src/screens/SplashScreen.tsx
-
-import React, { useEffect, useRef, useState, FC } from 'react';
-import { View, Text, StyleSheet, Animated, Image, SafeAreaView, Dimensions, Easing } from 'react-native';
-import * as SplashScreenNative from 'expo-splash-screen';
+import React, { useEffect, useRef, useState } from 'react';
+import { 
+  View, Text, StyleSheet, Animated, Image, 
+  SafeAreaView, Dimensions, Easing 
+} from 'react-native';
+import * as SplashScreen from 'expo-splash-screen'; // ⭐ UN SEUL IMPORT
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
-
-// Supposons que vous ayez un hook useSettings qui fournit le thème
-import { useSettings } from '../hooks/useSettings';
-import { AppTheme } from '../constants/theme'; // Assurez-vous d'avoir ce type
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-// Assurez-vous d'avoir un type pour votre pile de navigation (RootStackParamList)
+import { useSettings } from '../hooks/useSettings';
+
 type RootStackParamList = {
-    Splash: undefined;
-    Main: undefined; // La destination finale
-    // ... autres routes
+  Splash: undefined;
+  Main: undefined;
 };
 
 type NavigationProps = NativeStackNavigationProp<RootStackParamList, 'Splash'>;
 
-// 1. Empêcher l'automasquage du splash natif au démarrage
-SplashScreenNative.preventAutoHideAsync();
+// Empêcher le splash natif de se cacher automatiquement
+SplashScreen.preventAutoHideAsync();
 
 const { width } = Dimensions.get('window');
+const FAKE_LOADING_DURATION = 2500; // 2.5 secondes (moins long)
+const FADE_OUT_DURATION = 500;
 
-const FAKE_LOADING_DURATION = 3500; // Durée de l'animation de progression (3.5s)
-const FADE_OUT_DURATION = 500;      // Durée du fade out de l'écran (0.5s)
+const AppSplashScreen = () => {
+  const { theme } = useSettings();
+  const navigation = useNavigation<NavigationProps>();
 
-const SplashScreen: FC = () => {
-    const { theme } = useSettings();
-    const navigation = useNavigation<NavigationProps>();
+  // Animations
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current; // Commence à 0, fade in
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const [progressText, setProgressText] = useState(0);
 
-    // Valeurs animées
-    const progressAnim = useRef(new Animated.Value(0)).current; // Pour la barre (0 -> 100)
-    const fadeAnim = useRef(new Animated.Value(1)).current;     // Pour l'opacité de l'écran (1 -> 0)
-    const textGlow = useRef(new Animated.Value(0)).current;
+  // Largeur de la barre de progression
+  const progressBarWidth = progressAnim.interpolate({
+    inputRange: [0, 100],
+    outputRange: ['0%', '100%'],
+  });
 
-    const [progressText, setProgressText] = useState(0); // Affichage du pourcentage
+  useEffect(() => {
+    let mounted = true;
+    let interval: NodeJS.Timeout;
 
-    // Calcule la largeur de la barre en fonction du progrès de l'animation
-    const progressBarWidth = progressAnim.interpolate({
-        inputRange: [0, 100],
-        outputRange: ['0%', '100%'],
-    });
-
-    // Effet de lueur animée
-    const glowInterpolation = textGlow.interpolate({
-        inputRange: [0, 0.5, 1],
-        outputRange: ['0 0 0px rgba(67, 97, 238, 0)', '0 0 20px rgba(67, 97, 238, 0.5)', '0 0 5px rgba(67, 97, 238, 0.2)']
-    });
-
-    // 2. Logique de l'animation et de la navigation
-    useEffect(() => {
-        const startLoading = async () => {
-            //  console.log("SPLASH: Démarrage de l'animation de chargement.");
-            // Étape 1: Animer la barre de progression
-            Animated.timing(progressAnim, {
-                toValue: 100,
-                duration: FAKE_LOADING_DURATION,
-                easing: Easing.ease,
-                useNativeDriver: false, // width/pourcentage nécessite useNativeDriver: false
-            }).start(() => {
-                // console.log("SPLASH: Progression terminée (100%).");
-                handleLoadingComplete();
-            });
-
-            // Mettre à jour le texte du pourcentage (simulé)
-            const interval = setInterval(() => {
-                setProgressText(prev => {
-                    if (prev < 100) {
-                        // Estimation du progrès basée sur le temps écoulé
-                        const elapsedTime = Date.now() - startTime;
-                        const calculatedProgress = Math.min(100, Math.floor((elapsedTime / FAKE_LOADING_DURATION) * 100));
-                        return calculatedProgress;
-                    }
-                    clearInterval(interval);
-                    return 100;
-                });
-            }, 100);
-
-            const startTime = Date.now();
-        };
-
-        const handleLoadingComplete = async () => {
-            // Optionnel: Ajouter une vibration subtile à 100%
-            try {
-                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            } catch (e) {
-                console.warn("Haptics non disponible ou erreur:", e);
-            }
-
-            // Étape 2: Fade out de l'écran personnalisé
+    const startSplashAnimation = async () => {
+      try {
+        // 1. Cache d'abord le splash natif d'Expo
+        await SplashScreen.hideAsync();
+        
+        // 2. Fade in de notre splash personnalisé
+        if (mounted) {
+          Animated.parallel([
             Animated.timing(fadeAnim, {
-                toValue: 0,
-                duration: FADE_OUT_DURATION,
-                easing: Easing.linear,
-                useNativeDriver: true,
-            }).start(async () => {
-                // console.log("SPLASH: Fade out terminé. Masquage du splash natif et navigation.");
+              toValue: 1,
+              duration: 600,
+              easing: Easing.out(Easing.cubic),
+              useNativeDriver: true,
+            }),
+            Animated.spring(scaleAnim, {
+              toValue: 1,
+              tension: 60,
+              friction: 8,
+              useNativeDriver: true,
+            }),
+          ]).start();
+        }
 
-                // Étape 3: Masquer le splash screen natif d'Expo
-                await SplashScreenNative.hideAsync();
+        // 3. Démarrer la barre de progression
+        if (mounted) {
+          Animated.timing(progressAnim, {
+            toValue: 100,
+            duration: FAKE_LOADING_DURATION,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: false,
+          }).start(({ finished }) => {
+            if (finished && mounted) {
+              handleLoadingComplete();
+            }
+          });
+        }
 
-                // Étape 4: Naviguer vers l'écran principal
-                navigation.replace('Main');
-            });
-        };
+        // 4. Mettre à jour le pourcentage texte
+        const startTime = Date.now();
+        interval = setInterval(() => {
+          if (mounted) {
+            const elapsed = Date.now() - startTime;
+            const calculated = Math.min(100, Math.floor((elapsed / FAKE_LOADING_DURATION) * 100));
+            setProgressText(calculated);
+          }
+        }, 100);
 
-        startLoading();
+      } catch (error) {
+        console.warn('Erreur splash:', error);
+        if (mounted) {
+          navigation.replace('Main');
+        }
+      }
+    };
 
-        // Nettoyage: stopper l'intervalle si le composant est démonté prématurément
-        return () => {
-            progressAnim.stopAnimation();
-        };
-    }, [navigation, theme]); // Dépendances importantes
+    const handleLoadingComplete = async () => {
+      try {
+        // Vibration subtile à 100%
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      } catch (e) {
+        // Ignore si haptics non disponible
+      }
 
-    return (
-        <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-            <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+      // Fade out et navigation
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: FADE_OUT_DURATION,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start(() => {
+        if (mounted) {
+          navigation.replace('Main');
+        }
+      });
+    };
 
-                {/* LOGO */}
-                <Image
-                    source={require('../../assets/images/splash.png')} // ASSUREZ-VOUS DU CHEMIN
-                    style={[styles.logo,]} // TintColor pour l'adapter au thème (si le logo est monochrome)
-                    resizeMode="cover"
-                />
+    // Démarrer l'animation après un court délai
+    const timer = setTimeout(() => {
+      startSplashAnimation();
+    }, 100);
 
-                {/* Titre avec effet de lueur */}
-                <Animated.View style={[styles.titleContainer, { shadowRadius: glowInterpolation }]}>
-                    <Text style={styles.mainTitle}>SMART GAME</Text>
-                    <Text style={styles.subTitle}>L'intelligence en jeu</Text>
-                </Animated.View>
+    return () => {
+      mounted = false;
+      clearTimeout(timer);
+      if (interval) clearInterval(interval);
+      progressAnim.stopAnimation();
+    };
+  }, []);
 
-                {/* BARRE DE PROGRESSION */}
-                <View style={styles.loadingArea}>
+  return (
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <Animated.View 
+        style={[
+          styles.container, 
+          { 
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }]
+          }
+        ]}
+      >
+        {/* LOGO */}
+        <Image
+          source={require('../../assets/images/splash.png')}
+          style={styles.logo}
+          resizeMode="cover"
+        />
 
-                    {/* Conteneur de la barre */}
-                    <View style={[styles.progressBarContainer, { backgroundColor: theme.card }]}>
-                        <Animated.View
-                            style={[
-                                styles.progressBar,
-                                {
-                                    backgroundColor: theme.primary,
-                                    width: progressBarWidth
-                                }
-                            ]}
-                        />
-                    </View>
+        {/* TITRE */}
+        <View style={styles.titleContainer}>
+          <Text style={[styles.mainTitle, { color: theme.text }]}>
+            SMART GAME
+          </Text>
+          <Text style={[styles.subTitle, { color: theme.secondary }]}>
+            L'intelligence en jeu
+          </Text>
+        </View>
 
-                    {/* Texte de chargement */}
-                    <Text style={[styles.loadingText, { color: theme.text, fontSize: 16 }]}>
-                        Chargement de Smart Game... ({progressText}%)
-                    </Text>
-                </View>
+        {/* BARRE DE PROGRESSION */}
+        <View style={styles.loadingArea}>
+          {/* Conteneur barre */}
+          <View style={[styles.progressBarContainer, { backgroundColor: theme.card }]}>
+            <Animated.View
+              style={[
+                styles.progressBar,
+                {
+                  backgroundColor: theme.primary,
+                  width: progressBarWidth
+                }
+              ]}
+            />
+          </View>
 
-                {/* Footer avec informations */}
-                <View style={styles.footer}>
-                    <View style={styles.featureIcons}>
-                        <MaterialCommunityIcons name="brain" size={20} color="#000" style={styles.featureIcon} />
-                        <MaterialCommunityIcons name="puzzle" size={20} color="#000" style={styles.featureIcon} />
-                        <MaterialCommunityIcons name="trophy" size={20} color="#000" style={styles.featureIcon} />
-                        <MaterialCommunityIcons name="rocket" size={20} color="#000" style={styles.featureIcon} />
-                    </View>
-                    <Text style={styles.versionText}>Version 1.0.0 • Prêt pour l'aventure</Text>
-                </View>
+          {/* Texte pourcentage */}
+          <Text style={[styles.loadingText, { color: theme.text }]}>
+            Chargement de Smart Game... {progressText}%
+          </Text>
+        </View>
 
+        {/* ICÔNES ANIMÉES */}
+        <View style={styles.animatedIcons}>
+          {['brain', 'puzzle', 'trophy', 'rocket'].map((icon, index) => (
+            <Animated.View
+              key={icon}
+              style={{
+                opacity: progressAnim.interpolate({
+                  inputRange: [index * 25, (index + 1) * 25],
+                  outputRange: [0.3, 1],
+                  extrapolate: 'clamp'
+                }),
+                transform: [{
+                  scale: progressAnim.interpolate({
+                    inputRange: [index * 25, (index + 1) * 25],
+                    outputRange: [0.8, 1.2],
+                    extrapolate: 'clamp'
+                  })
+                }]
+              }}
+            >
+              <MaterialCommunityIcons
+                name={icon as any}
+                size={24}
+                color={theme.primary}
+                style={styles.featureIcon}
+              />
             </Animated.View>
-        </SafeAreaView>
-    );
+          ))}
+        </View>
+
+        {/* FOOTER */}
+        <View style={styles.footer}>
+          <Text style={[styles.versionText, { color: theme.secondary }]}>
+            Version 1.0.0 • Prêt pour l'aventure
+          </Text>
+        </View>
+      </Animated.View>
+    </SafeAreaView>
+  );
 };
 
-// 3. Styles
 const styles = StyleSheet.create({
-    safeArea: {
-        flex: 1,
-    },
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: 30,
-    },
-    logo: {
-        width: 250,
-        height: 250,
-        marginBottom: 50,
-        borderRadius: 50,
-    },
-    titleContainer: {
-        alignItems: 'center',
-        marginBottom: 50,
-        shadowColor: '#4361EE',
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 1,
-    },
-    mainTitle: {
-        fontSize: 42,
-        fontWeight: 'bold',
-        color: '#333',
-        letterSpacing: 2,
-        textShadowColor: '#777',
-        textShadowOffset: { width: 0, height: 0 },
-        textShadowRadius: 10,
-        marginBottom: 8,
-    },
-    subTitle: {
-        fontSize: 16,
-        color: '#333',
-        letterSpacing: 1,
-        fontStyle: 'italic',
-    },
-    loadingArea: {
-        width: '100%',
-        alignItems: 'center',
-    },
-    progressBarContainer: {
-        width: '80%', // Limiter la barre à 80% de la largeur
-        height: 6, // Rendu un peu plus visible
-        borderRadius: 3,
-        overflow: 'hidden',
-        marginBottom: 10,
-    },
-    progressBar: {
-        height: '100%',
-        borderRadius: 3,
-    },
-    loadingText: {
-        fontWeight: 'bold',
-        textAlign: 'center',
-    },
-    footer: {
-        position: 'absolute',
-        bottom: 40,
-        alignItems: 'center',
-    },
-    featureIcons: {
-        flexDirection: 'row',
-        marginBottom: 15,
-    },
-    featureIcon: {
-        marginHorizontal: 10,
-        opacity: 0.8,
-    },
-    versionText: {
-        //  color: 'rgba(255, 255, 255, 0.5)',
-        fontSize: 12,
-        textAlign: 'center',
-    },
+  safeArea: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 30,
+  },
+  logo: {
+    // width: width * 0.6,
+    // height: width * 0.6,
+    width: 250,
+    height: 250,
+    borderRadius: 50,
+    marginBottom: 30,
+  },
+  titleContainer: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  mainTitle: {
+    fontSize: 42,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+    marginBottom: 8,
+  },
+  subTitle: {
+    fontSize: 16,
+    fontStyle: 'italic',
+  },
+  loadingArea: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  progressBarContainer: {
+    width: '80%',
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  progressBar: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  loadingText: {
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  animatedIcons: {
+    flexDirection: 'row',
+    marginBottom: 30,
+  },
+  featureIcon: {
+    marginHorizontal: 12,
+    opacity: 0.8,
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 40,
+    alignItems: 'center',
+  },
+  versionText: {
+    fontSize: 12,
+    textAlign: 'center',
+  },
 });
 
-export default SplashScreen;
+export default AppSplashScreen;

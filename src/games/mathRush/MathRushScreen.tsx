@@ -183,7 +183,13 @@ const MathRushScreen = ({ route, navigation }: Props) => {
         playSound('click');
     };
 
+    const isAnswerProcessing = useRef(false);
+
     const handleAnswer = (answer: number | null) => {
+        // ⭐⭐ EMPÊCHER LES APPELS MULTIPLES
+        if (isAnswerProcessing.current) return;
+        isAnswerProcessing.current = true;
+
         if (!problems[currentIndex]) {
             console.warn('Problème non disponible pour currentIndex:', currentIndex);
             return;
@@ -248,7 +254,14 @@ const MathRushScreen = ({ route, navigation }: Props) => {
         }
 
         // Prochaine question
-        setTimeout(() => setCurrentIndex(i => i + 1), 1500); // Augmenté pour laisser voir le feedback
+        // setTimeout(() => setCurrentIndex(i => i + 1), 1500); // Augmenté pour laisser voir le feedback
+        setTimeout(() => {
+            if (!currentState.isGameOver) {
+                setCurrentIndex(i => i + 1);
+            }
+            // ⭐⭐ RÉACTIVER POUR LA PROCHAINE QUESTION
+            isAnswerProcessing.current = false;
+        }, 1500);
     };
 
     const finishLevel = () => {
@@ -268,7 +281,7 @@ const MathRushScreen = ({ route, navigation }: Props) => {
         //     spendLife(1);
         // }
 
-      //  setCurrentState(prev => ({ ...prev, isGameOver: true, hasWonLevel: isVictory }));
+        //  setCurrentState(prev => ({ ...prev, isGameOver: true, hasWonLevel: isVictory }));
         // 2. Afficher le modal (MAINTENANT que le jeu est marqué comme terminé)
         // setModalVisible(true);
         // ⭐⭐⭐ DIRECTEMENT isGameOver, pas besoin de modalVisible ⭐⭐⭐
@@ -385,7 +398,7 @@ const MathRushScreen = ({ route, navigation }: Props) => {
     if (!currentProblem && !currentState.isGameOver) {
         return (
             <View style={[styles.container, { backgroundColor: theme.background }]}>
-                <Text style={{ color: theme.text }}>Chargement du problème...</Text>
+                <Text style={{ color: theme.text }}>Chargement ...</Text>
             </View>
         );
     }

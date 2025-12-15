@@ -38,6 +38,17 @@ const WordScrambleScreen = ({ route, navigation }: Props) => {
   const [isGameOver, setIsGameOver] = useState(false);
   const [hasWonLevel, setHasWonLevel] = useState(false);
 
+  // Ajoutez avec les autres états
+const [feedback, setFeedback] = useState<{
+  visible: boolean;
+  type: 'success' | 'failure';
+  correctWord?: string;
+}>({
+  visible: false,
+  type: 'success',
+  correctWord: undefined
+});
+
   // AJOUTEZ cet effet pour gérer le cas où le jeu ne se charge pas :
   useEffect(() => {
     if (isDailyChallenge && words.length === 0) {
@@ -83,21 +94,38 @@ const WordScrambleScreen = ({ route, navigation }: Props) => {
   };
 
   // Timer
-  useEffect(() => {
-    if (!isGameOver && timeLeft > 0) {
-      const timer = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            handleWordFailure(); // Temps écoulé pour ce mot
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      return () => clearInterval(timer);
-    }
-  }, [timeLeft, isGameOver, currentIndex]);
+  // useEffect(() => {
+  //   if (!isGameOver && timeLeft > 0) {
+  //     const timer = setInterval(() => {
+  //       setTimeLeft((prev) => {
+  //         if (prev <= 1) {
+  //           clearInterval(timer);
+  //           handleWordFailure(); // Temps écoulé pour ce mot
+  //           return 0;
+  //         }
+  //         return prev - 1;
+  //       });
+  //     }, 1000);
+  //     return () => clearInterval(timer);
+  //   }
+  // }, [timeLeft, isGameOver, currentIndex]);
+
+  // Modifiez l'effet du timer pour ne pas expirer pendant le feedback
+useEffect(() => {
+  if (!isGameOver && timeLeft > 0 && !feedback.visible) { // ⭐ Ajoutez !feedback.visible
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          handleWordFailure(); // Temps écoulé pour ce mot
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }
+}, [timeLeft, isGameOver, currentIndex, feedback.visible]); // ⭐ Ajoutez feedback.visible
 
   // Logique de validation
   useEffect(() => {
@@ -157,13 +185,39 @@ const WordScrambleScreen = ({ route, navigation }: Props) => {
     playSound('click');
   };
 
-  const handleWordSuccess = () => {
-    playSound('success');
-    vibrate('success');
+  // const handleWordSuccess = () => {
+  //   playSound('success');
+  //   vibrate('success');
     
-    // Power-ups et Streak
-    const newStreak = streak + 1;
-    setStreak(newStreak);
+  //   // Power-ups et Streak
+  //   const newStreak = streak + 1;
+  //   setStreak(newStreak);
+    
+  //   // Mise à jour du statut du mot
+  //   const newWords = [...words];
+  //   newWords[currentIndex].status = 'success';
+  //   setWords(newWords);
+    
+  //   nextWord();
+  // };
+
+  const handleWordSuccess = () => {
+  playSound('success');
+  vibrate('success');
+  
+  // ⭐ OPTIONNEL : Afficher aussi un feedback pour le succès
+  setFeedback({
+    visible: true,
+    type: 'success',
+    correctWord: undefined
+  });
+  
+  const newStreak = streak + 1;
+  setStreak(newStreak);
+  
+  // Après 1 seconde, passer au mot suivant
+  setTimeout(() => {
+    setFeedback({ visible: false, type: 'success', correctWord: undefined });
     
     // Mise à jour du statut du mot
     const newWords = [...words];
@@ -171,19 +225,50 @@ const WordScrambleScreen = ({ route, navigation }: Props) => {
     setWords(newWords);
     
     nextWord();
-  };
+  }, 1000); // Un peu plus court pour le succès
+};
+
+  // const handleWordFailure = () => {
+  //   playSound('error');
+  //   vibrate('error');
+  //   setStreak(0); // Reset streak
+
+
+    
+  //   const newWords = [...words];
+  //   newWords[currentIndex].status = 'failed';
+  //   setWords(newWords);
+    
+  //   nextWord();
+  // };
 
   const handleWordFailure = () => {
-    playSound('error');
-    vibrate('error');
-    setStreak(0); // Reset streak
+  playSound('error');
+  vibrate('error');
+  setStreak(0); // Reset streak
+  
+  // ⭐ NOUVEAU : Afficher le feedback avec le mot correct
+  const correctWord = words[currentIndex].original;
+  
+  setFeedback({
+    visible: true,
+    type: 'failure',
+    correctWord
+  });
+  
+  // Attendre 2 secondes pour montrer le feedback, PUIS passer au mot suivant
+  setTimeout(() => {
+    setFeedback({ visible: false, type: 'success', correctWord: undefined });
     
+    // Mettre à jour le statut du mot
     const newWords = [...words];
     newWords[currentIndex].status = 'failed';
     setWords(newWords);
     
+    // Passer au mot suivant
     nextWord();
-  };
+  }, 2000); // Même temps que MathRush
+};
 
   const nextWord = () => {
     const nextIndex = currentIndex + 1;
@@ -238,6 +323,37 @@ const WordScrambleScreen = ({ route, navigation }: Props) => {
   return (
     <GameScreenWrapper gameId="WordScramble">
       <View style={{ flex: 1 }}>
+       
+{feedback.visible && (
+  <View style={[
+    styles.feedbackOverlay,
+    { 
+      backgroundColor: feedback.type === 'success' 
+        ? 'rgba(76, 175, 80, 0.9)' 
+        : 'rgba(244, 67, 54, 0.9)' 
+    }
+  ]}>
+    <MotiView
+      from={{ scale: 0.5, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: 'spring' }}
+    >
+      <MaterialCommunityIcons
+        name={feedback.type === 'success' ? 'check-circle' : 'close-circle'}
+        size={80}
+        color="#FFFFFF"
+      />
+      <Text style={styles.feedbackText}>
+        {feedback.type === 'success' ? 'Correct ! 🎉' : 'Temps écoulé ! 😞'}
+      </Text>
+      {feedback.type === 'failure' && feedback.correctWord && (
+        <Text style={styles.correctAnswerText}>
+          Le mot était : {feedback.correctWord}
+        </Text>
+      )}
+    </MotiView>
+  </View>
+)}
         {/* Interface du jeu - seulement si le jeu n'est pas terminé */}
         {!isGameOver && (
           <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -361,7 +477,33 @@ const styles = StyleSheet.create({
   letterText: { fontSize: 20, fontWeight: 'bold' },
   
   actions: { flexDirection: 'row', gap: 20, marginBottom: 20 },
-  actionButton: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center' }
+  actionButton: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center' },
+
+  // Ajoutez à votre StyleSheet
+feedbackOverlay: {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 1000,
+},
+feedbackText: {
+  fontSize: 28,
+  fontWeight: 'bold',
+  color: '#FFFFFF',
+  textAlign: 'center',
+  marginTop: 20,
+  paddingHorizontal: 20,
+},
+correctAnswerText: {
+  fontSize: 22,
+  color: '#FFFFFF',
+  marginTop: 10,
+  fontWeight: '600',
+},
 });
 
 export default WordScrambleScreen;

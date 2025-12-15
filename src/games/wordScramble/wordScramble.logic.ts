@@ -1,5 +1,4 @@
 // src/games/wordScramble/wordScramble.logic.ts
-import { NeuroDifficulty } from '../../constants/neuroPuzzleConfig'; // On réutilise le type Difficulty ou on en crée un
 import { GameDifficulty } from '../../constants/gameData';
 import { WORD_DB } from './wordDatabase';
 
@@ -48,7 +47,8 @@ export const generateWordLevel = (difficulty: GameDifficulty, level: number): Le
   switch (difficulty) {
     case 'easy':
       timePerWord = Math.max(40, 60 - (level * 0.1)); // Diminue lentement
-      wordCount = 5 + Math.floor(level / 50); // 5 à 8 mots
+     wordCount = 5 + Math.floor(level / 50); // 5 à 8 mots
+   //  wordCount = 5
       
       if (level <= 50) lengthsToPick = [4];
       else if (level <= 100) lengthsToPick = [4, 5];
@@ -72,7 +72,7 @@ export const generateWordLevel = (difficulty: GameDifficulty, level: number): Le
       break;
 
     case 'master': // Cas spécial (type 'master' n'est pas dans GameDifficulty standard, ajustez selon vos types)
-      timePerWord = 30; // Temps très court fixe
+      timePerWord = 40; // Temps très court fixe
       wordCount = 8;
       lengthsToPick = [8, 9, 10];
       break;

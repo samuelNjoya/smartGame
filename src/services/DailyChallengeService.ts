@@ -95,7 +95,7 @@ const getChallengeForDate = (date: Date): DailyChallengeConfig => {
   const seed = parseInt(timestamp.toString().slice(-9)); // Prendre les 9 derniers chiffres
   
   // 1. Choisir le jeu
-  const availableGames = GAMES.filter(g => g.id !== 'RandomGame');
+  const availableGames = GAMES.filter(g => g.id !== 'NeuroPuzzle'); // g => g.id !== 'RandomGame' && g.id !== 'NeuroPuzzle'
   const gameIndex = (seed % 1000) % availableGames.length;
   const selectedGame = availableGames[gameIndex];
 

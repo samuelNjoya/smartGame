@@ -143,14 +143,7 @@ const MemoryGameScreen = ({ route, navigation }: Props) => {
     setSelected(prevSelected => [...prevSelected, index]);
   };
 
-  // ⭐⭐⭐ CORRECTION : Protection contre les doublons d'enregistrement ⭐⭐⭐
-  const handleGameEnd = () => {
-    // Cette fonction est appelée quand le jeu est terminé
-    // Mais l'enregistrement est fait dans GameEndModal
-    // On ne fait que marquer isGameOver = true
-    setIsGameOver(true);
-  };
-
+ 
   // Gestion du chargement
   if (deck.length === 0 && !isGameOver) {
     return (

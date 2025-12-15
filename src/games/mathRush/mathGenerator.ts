@@ -164,7 +164,8 @@ const generateProblem = (difficulty: GameDifficulty, problemId: number): MathPro
  * Génère l'ensemble des problèmes pour un niveau.
  */
 export const generateMathLevel = (difficulty: GameDifficulty, level: number): MathProblem[] => {
-  const numProblems = 10 + Math.floor((Math.min(level, 100) / 100) * 10); // 10 à 20 problèmes
+  //const numProblems = 10 + Math.floor((Math.min(level, 100) / 100) * 10); // 10 à 20 problèmes
+  const numProblems = 10; // Fixe à 10 problèmes
   const problems: MathProblem[] = [];
 
   for (let i = 0; i < numProblems; i++) {

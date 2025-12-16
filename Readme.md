@@ -121,6 +121,7 @@ eas whoami se rassurer d'etre connecter
 
 https://expo.dev/accounts/samuel24/projects/smart-games/builds/90d7f655-a456-48b7-b049-edd5b2a0b4e0
 lien final
+https://expo.dev/accounts/samuel24/projects/smart-games/builds/17b928ad-8303-4dc9-af84-485e86436d8a
 eas build -p android --profile preview  //lancer la generation d'un apk installable partout
 
 eas build --platform android --local //bluid local beacoups plus rapide Nécessite Android SDK / Java installé sur ton PC Rapide, gratuit, mais ça nécessite Android Studio installé.

@@ -113,19 +113,52 @@ npx expo-analyzer --suggest
 # Voir les dépendances les plus lourdes
 npx expo-analyzer --tree
 
+# pour reduire la taille
+npx expo install expo-build-properties
+dans app.json ajouter
+{
+  "expo": {
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true, //optimisation du code et performance pour -20% taille
+            "enableShrinkResourcesInReleaseBuilds": true, //supprimeles ressources unitilisées-10% taille
+            "useLegacyPackaging": true // +compatibilité, -taille
+            // Ton APK devient BEAUCOUP plus gros
+            "useLegacyPackaging": true → APK: 35-40MB impossible de publier sur play store et telechargL
+            "useLegacyPackaging": false → AAB: 15-25MB (download)
+          }
+        }
+      ]
+    ]
+  }
+}
+
+dans app.json  "newArchEnabled": false, pour reduire la taille entre 40 et 50 Mo de 81 a 41
+
+
 # pour installer  EAS expo application service
 npm install -g eas-cli
 eas login //se connecter a expo samuel24 et mon mot de passe
-eas build:configure //configurer le projet une seule fois
+eas build:configure //configurer le projet une seule fois cree le fichier eas.json
 eas whoami se rassurer d'etre connecter
 
-https://expo.dev/accounts/samuel24/projects/smart-games/builds/90d7f655-a456-48b7-b049-edd5b2a0b4e0
-lien final
-https://expo.dev/accounts/samuel24/projects/smart-games/builds/17b928ad-8303-4dc9-af84-485e86436d8a
+<!-- lien final expire le 29/12 -->
+https://expo.dev/accounts/samuel24/projects/smart-games/builds/84885f38-3ba6-42ef-97f3-0c1dd9582692
 eas build -p android --profile preview  //lancer la generation d'un apk installable partout
+eas build -p android --profile production  // en production 
+npx expo prebuild --clean
+apres avoir ajouter "android": {
+        "buildType": "app-bundle"
+      } dans eas.json
+
 
 eas build --platform android --local //bluid local beacoups plus rapide Nécessite Android SDK / Java installé sur ton PC Rapide, gratuit, mais ça nécessite Android Studio installé.
 
+# bluidia.space
+pour coder les apps https://play.google.com/console/signup
 
 
 

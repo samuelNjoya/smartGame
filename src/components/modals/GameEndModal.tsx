@@ -1,7 +1,7 @@
 // src/components/modals/GameEndModal.tsx
 
 import React, { useRef, useState } from 'react';
-import { View, Text, Modal, StyleSheet, Button, Alert } from 'react-native';
+import { View, Text, Modal, StyleSheet, Button, Alert, TouchableOpacity } from 'react-native';
 import { useSettings } from '../../hooks/useSettings';
 import { usePlayer, } from '../../hooks/usePlayer';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -32,6 +32,39 @@ type GameEndModalProps = {
   isDailyChallenge?: boolean; // pour les défis quotidiens
 };
 
+type IconButtonProps = {
+  title: string;
+  icon: string;
+  color: string;
+  onPress: () => void;
+  disabled?: boolean;
+  backgroundColor?: string;
+};
+
+const IconButton = ({ title, icon, color, onPress, disabled = false, backgroundColor }: IconButtonProps) => (
+  <TouchableOpacity
+    style={[
+      styles.iconButton,
+      { backgroundColor: backgroundColor || color + '20' },
+      disabled && styles.disabledButton
+    ]}
+    onPress={onPress}
+    disabled={disabled}
+    activeOpacity={0.7}
+  >
+    <Text style={[styles.buttonText, { color: disabled ? '#999' : color }]}>
+      {title}
+    </Text>
+
+     <MaterialCommunityIcons
+      name={icon as any}
+      size={18}
+      color={disabled ? '#999' : color}
+      style={styles.buttonIcon}
+    />
+  </TouchableOpacity>
+);
+
 const GameEndModal = ({
   visible,
   gameId,
@@ -53,7 +86,7 @@ const GameEndModal = ({
   const [xpEarned, setXpEarned] = useState(0);
   const [showRandomRewardModal, setShowRandomRewardModal] = useState(false);
   const [isNewLevelUnlocked, setIsNewLevelUnlocked] = useState(false);
-    // ⭐⭐⭐ AJOUT : Ref pour suivre si l'enregistrement a déjà été fait ⭐⭐⭐
+  // ⭐⭐⭐ AJOUT : Ref pour suivre si l'enregistrement a déjà été fait ⭐⭐⭐
   const hasRecordedResult = useRef(false);
 
   const isMultipleOf5 = level % 5 === 0;
@@ -64,17 +97,17 @@ const GameEndModal = ({
   // --- Logique de Récompense et Progression ---
   React.useEffect(() => {
     //if (!visible) return;
-      // ⭐⭐⭐ CORRECTION : Réinitialiser quand le modal devient invisible ⭐⭐⭐
+    // ⭐⭐⭐ CORRECTION : Réinitialiser quand le modal devient invisible ⭐⭐⭐
     if (!visible) {
       hasRecordedResult.current = false;
       return;
     }
-// ⭐⭐⭐ CORRECTION : Ne pas enregistrer si déjà fait ⭐⭐⭐
+    // ⭐⭐⭐ CORRECTION : Ne pas enregistrer si déjà fait ⭐⭐⭐
     if (hasRecordedResult.current) {
       return;
     }
 
-     hasRecordedResult.current = true;
+    hasRecordedResult.current = true;
 
     // --- 1. Enregistrement des statistiques (Indépendant de la victoire) ---
     // Nous enregistrons le résultat seulement si le niveau est terminé (visible est true)
@@ -86,159 +119,159 @@ const GameEndModal = ({
     let baseXP = 0;
 
     const processGameResult = async () => {
-    // Si c'est un Défi Quotidien, marquer le défi comme joué immédiatement
-    if (isDailyChallenge) {
-          const currentStatus = await DailyChallengeService.getStatus(); //await 
-      
-      // Si le défi n'est plus "pending", ça veut dire qu'il a déjà été traité
-      if (currentStatus !== 'pending') {
-        console.log('⚠️ Défi déjà traité, pas de nouvel enregistrement');
-        return; // On arrête ici, pas d'enregistrement double
-      }
-            // Sinon, on marque comme complété
-      DailyChallengeService.completeChallenge(isVictory); // <-- CORRECTION 3: Joué, qu'on gagne ou perde isVictory
-    }
-
-    if (isVictory) {
-  
+      // Si c'est un Défi Quotidien, marquer le défi comme joué immédiatement
       if (isDailyChallenge) {
-        baseXP = DailyChallengeService.BONUS_XP;
-        // Pas d'appel à ProgressionService.saveLevelCompletion() ici (CORRECTION 2)
-      } else {
-        baseXP = BASE_XP_REWARDS[difficulty];
-        if (isMultipleOf5) baseXP *= 2;
+        const currentStatus = await DailyChallengeService.getStatus(); //await 
 
-        // Vérifier et enregistrer la progression (Uniquement en mode CARRIÈRE)
-        const checkProgression = async () => {
-          // CORRECTION 2: ON N'APPELE CECI QUE SI CE N'EST PAS UN DÉFI
-          const unlocked = await ProgressionService.saveLevelCompletion(gameId, difficulty, level);
-          setIsNewLevelUnlocked(unlocked);
-
-          if (isMultipleOf10) {
-            setTimeout(() => setShowRandomRewardModal(true), 500);
-          }
-        };
-        checkProgression();
+        // Si le défi n'est plus "pending", ça veut dire qu'il a déjà été traité
+        if (currentStatus !== 'pending') {
+          console.log('⚠️ Défi déjà traité, pas de nouvel enregistrement');
+          return; // On arrête ici, pas d'enregistrement double
+        }
+        // Sinon, on marque comme complété
+        DailyChallengeService.completeChallenge(isVictory); // <-- CORRECTION 3: Joué, qu'on gagne ou perde isVictory
       }
-      // Application de l'XP au joueur (ce qui monte son niveau global)
-      setXpEarned(baseXP);
-      addXP(baseXP);
 
-      // --- ENREGISTREMENT DANS LE CONTEXTE (Victoire) ---
-      addGameResult({
-        gameId,
-        difficulty,
-        level,
-        isVictory: true,
-        score: baseXP, // Xp gagné
-        //  stars: stars,
-        //  stats: gameStats,
-        // Ajoutez un marqueur dans les stats pour le retrouver plus tard si voulu
-        stats: { ...gameStats, isDailyChallenge },
-      });
+      if (isVictory) {
 
-    } else {
-      // --- ENREGISTREMENT DANS LE CONTEXTE (Défaite) ---
-      // Optionnel : Enregistrer la défaite pour les stats globales (taux de réussite)
-      addGameResult({
-        gameId,
-        difficulty,
-        level,
-        isVictory: false,
-        score: 0, // Score nul en cas de défaite
-        // stars: 0,
-        stats: gameStats,
-      });
-      setXpEarned(0); // Pas d'XP gagné en cas de défaite
-    }
- };
- processGameResult();
+        if (isDailyChallenge) {
+          baseXP = DailyChallengeService.BONUS_XP;
+          // Pas d'appel à ProgressionService.saveLevelCompletion() ici (CORRECTION 2)
+        } else {
+          baseXP = BASE_XP_REWARDS[difficulty];
+          if (isMultipleOf5) baseXP *= 2;
+
+          // Vérifier et enregistrer la progression (Uniquement en mode CARRIÈRE)
+          const checkProgression = async () => {
+            // CORRECTION 2: ON N'APPELE CECI QUE SI CE N'EST PAS UN DÉFI
+            const unlocked = await ProgressionService.saveLevelCompletion(gameId, difficulty, level);
+            setIsNewLevelUnlocked(unlocked);
+
+            if (isMultipleOf10) {
+              setTimeout(() => setShowRandomRewardModal(true), 500);
+            }
+          };
+          checkProgression();
+        }
+        // Application de l'XP au joueur (ce qui monte son niveau global)
+        setXpEarned(baseXP);
+        addXP(baseXP);
+
+        // --- ENREGISTREMENT DANS LE CONTEXTE (Victoire) ---
+        addGameResult({
+          gameId,
+          difficulty,
+          level,
+          isVictory: true,
+          score: baseXP, // Xp gagné
+          //  stars: stars,
+          //  stats: gameStats,
+          // Ajoutez un marqueur dans les stats pour le retrouver plus tard si voulu
+          stats: { ...gameStats, isDailyChallenge },
+        });
+
+      } else {
+        // --- ENREGISTREMENT DANS LE CONTEXTE (Défaite) ---
+        // Optionnel : Enregistrer la défaite pour les stats globales (taux de réussite)
+        addGameResult({
+          gameId,
+          difficulty,
+          level,
+          isVictory: false,
+          score: 0, // Score nul en cas de défaite
+          // stars: 0,
+          stats: gameStats,
+        });
+        setXpEarned(0); // Pas d'XP gagné en cas de défaite
+      }
+    };
+    processGameResult();
 
   }, [visible, isVictory, gameId, difficulty, level, isMultipleOf5, isMultipleOf10, score, gameStats, isDailyChallenge]); //, stars,
   // ...
 
-// Remplacer TOUT le useEffect actuel (lignes 65 à 166) par : le pb de navigation reaparais apres ça et pour le haut pb de doublon
+  // Remplacer TOUT le useEffect actuel (lignes 65 à 166) par : le pb de navigation reaparais apres ça et pour le haut pb de doublon
 
-// ⭐⭐⭐ CORRECTION SIMPLE ET EFFICACE ⭐⭐⭐
-// React.useEffect(() => {
-//   // Ne rien faire si le modal n'est pas visible
-//   if (!visible) {
-//     hasRecordedResult.current = false;
-//     return;
-//   }
+  // ⭐⭐⭐ CORRECTION SIMPLE ET EFFICACE ⭐⭐⭐
+  // React.useEffect(() => {
+  //   // Ne rien faire si le modal n'est pas visible
+  //   if (!visible) {
+  //     hasRecordedResult.current = false;
+  //     return;
+  //   }
 
-//   // Si on a déjà enregistré le résultat, ne rien faire
-//   if (hasRecordedResult.current) {
-//     return;
-//   }
+  //   // Si on a déjà enregistré le résultat, ne rien faire
+  //   if (hasRecordedResult.current) {
+  //     return;
+  //   }
 
-//   // Marquer immédiatement que l'enregistrement est en cours
-//   hasRecordedResult.current = true;
+  //   // Marquer immédiatement que l'enregistrement est en cours
+  //   hasRecordedResult.current = true;
 
-//   const processGameResult = async () => {
-//     // ⭐⭐⭐ CORRECTION CRITIQUE : Pour les défis quotidiens, vérifier d'abord l'état actuel ⭐⭐⭐
-//     if (isDailyChallenge) {
-//       const currentStatus = await DailyChallengeService.getStatus();
-      
-//       // Si le défi n'est plus "pending", ça veut dire qu'il a déjà été traité
-//       if (currentStatus !== 'pending') {
-//         console.log('⚠️ Défi déjà traité, pas de nouvel enregistrement');
-//         return; // On arrête ici, pas d'enregistrement double
-//       }
-      
-//       // Sinon, on marque comme complété
-//       DailyChallengeService.completeChallenge(isVictory);
-//     }
+  //   const processGameResult = async () => {
+  //     // ⭐⭐⭐ CORRECTION CRITIQUE : Pour les défis quotidiens, vérifier d'abord l'état actuel ⭐⭐⭐
+  //     if (isDailyChallenge) {
+  //       const currentStatus = await DailyChallengeService.getStatus();
 
-//     if (isVictory) {
-//       let baseXP = 0;
+  //       // Si le défi n'est plus "pending", ça veut dire qu'il a déjà été traité
+  //       if (currentStatus !== 'pending') {
+  //         console.log('⚠️ Défi déjà traité, pas de nouvel enregistrement');
+  //         return; // On arrête ici, pas d'enregistrement double
+  //       }
 
-//       if (isDailyChallenge) {
-//         baseXP = DailyChallengeService.BONUS_XP;
-//         // Pour les défis, ne pas enregistrer dans la progression normale
-//       } else {
-//         baseXP = BASE_XP_REWARDS[difficulty];
-//         if (isMultipleOf5) baseXP *= 2;
+  //       // Sinon, on marque comme complété
+  //       DailyChallengeService.completeChallenge(isVictory);
+  //     }
 
-//         // Enregistrer la progression (Uniquement en mode CARRIÈRE)
-//         const unlocked = await ProgressionService.saveLevelCompletion(gameId, difficulty, level);
-//         setIsNewLevelUnlocked(unlocked);
+  //     if (isVictory) {
+  //       let baseXP = 0;
 
-//         if (isMultipleOf10) {
-//           setTimeout(() => setShowRandomRewardModal(true), 500);
-//         }
-//       }
+  //       if (isDailyChallenge) {
+  //         baseXP = DailyChallengeService.BONUS_XP;
+  //         // Pour les défis, ne pas enregistrer dans la progression normale
+  //       } else {
+  //         baseXP = BASE_XP_REWARDS[difficulty];
+  //         if (isMultipleOf5) baseXP *= 2;
 
-//       // Application de l'XP au joueur
-//       setXpEarned(baseXP);
-//       addXP(baseXP);
+  //         // Enregistrer la progression (Uniquement en mode CARRIÈRE)
+  //         const unlocked = await ProgressionService.saveLevelCompletion(gameId, difficulty, level);
+  //         setIsNewLevelUnlocked(unlocked);
 
-//       // Enregistrement dans le contexte
-//       addGameResult({
-//         gameId,
-//         difficulty,
-//         level,
-//         isVictory: true,
-//         score: baseXP,
-//         stats: { ...gameStats, isDailyChallenge },
-//       });
+  //         if (isMultipleOf10) {
+  //           setTimeout(() => setShowRandomRewardModal(true), 500);
+  //         }
+  //       }
 
-//     } else {
-//       // Pour la défaite
-//       addGameResult({
-//         gameId,
-//         difficulty,
-//         level,
-//         isVictory: false,
-//         score: 0,
-//         stats: gameStats,
-//       });
-//       setXpEarned(0);
-//     }
-//   };
+  //       // Application de l'XP au joueur
+  //       setXpEarned(baseXP);
+  //       addXP(baseXP);
 
-//   processGameResult();
-// }, [visible, isVictory, gameId, difficulty, level, isMultipleOf5, isMultipleOf10,score,gameStats, isDailyChallenge]);
+  //       // Enregistrement dans le contexte
+  //       addGameResult({
+  //         gameId,
+  //         difficulty,
+  //         level,
+  //         isVictory: true,
+  //         score: baseXP,
+  //         stats: { ...gameStats, isDailyChallenge },
+  //       });
+
+  //     } else {
+  //       // Pour la défaite
+  //       addGameResult({
+  //         gameId,
+  //         difficulty,
+  //         level,
+  //         isVictory: false,
+  //         score: 0,
+  //         stats: gameStats,
+  //       });
+  //       setXpEarned(0);
+  //     }
+  //   };
+
+  //   processGameResult();
+  // }, [visible, isVictory, gameId, difficulty, level, isMultipleOf5, isMultipleOf10,score,gameStats, isDailyChallenge]);
 
   // --- Fonctions de Navigation ---
   const handleNavigation = (targetLevel: number) => {
@@ -260,14 +293,14 @@ const GameEndModal = ({
     navigation.popToTop();
     navigation.navigate('LevelSelect', { gameId, gameName: gameId, difficulty });
   };
-//   const handleQuit = () => {
-//     onClose(); // Ferme le modal (et réinitialise l'état isGameOver dans MathRushScreen)
-//     // Tente de revenir à l'écran de sélection de niveau/jeu
-//     navigation.navigate('LevelSelect' as any); 
-//     // Si LevelSelect n'est pas l'écran parent direct, vous devrez peut-être ajuster:
-//     // navigation.popToTop(); 
-//     // navigation.navigate('LevelSelect', { gameId, gameName: gameId, difficulty }); 
-// };
+  //   const handleQuit = () => {
+  //     onClose(); // Ferme le modal (et réinitialise l'état isGameOver dans MathRushScreen)
+  //     // Tente de revenir à l'écran de sélection de niveau/jeu
+  //     navigation.navigate('LevelSelect' as any); 
+  //     // Si LevelSelect n'est pas l'écran parent direct, vous devrez peut-être ajuster:
+  //     // navigation.popToTop(); 
+  //     // navigation.navigate('LevelSelect', { gameId, gameName: gameId, difficulty }); 
+  // };
 
   // NOUVELLE FONCTION de sortie pour le Défi
   // const handleChallengeQuit = () => {
@@ -277,38 +310,38 @@ const GameEndModal = ({
 
   // NOUVELLE FONCTION de sortie pour le Défi (CORRECTION 1)
 
-// const handleChallengeQuit = () => {
-//     onClose(); // 1. Fermer le modal
-//     // 2. Tenter de revenir en arrière dans la pile actuelle (sortir du jeu)
-//     // Cela fonctionne si le jeu est l'écran au sommet de la pile GameStack.
-//    navigation.goBack(); 
-//     // 3. Naviguer vers l'écran DailyChallenge (le tab)
-//     // On utilise la navigation du tab (MainTabs), qui est accessible depuis n'importe quel enfant.
-//     // Assurez-vous que le nom de l'onglet est bien 'DailyChallenge' dans MainTabs.tsx
-//     navigation.navigate('DailyChallenge' as any); 
-// };
+  // const handleChallengeQuit = () => {
+  //     onClose(); // 1. Fermer le modal
+  //     // 2. Tenter de revenir en arrière dans la pile actuelle (sortir du jeu)
+  //     // Cela fonctionne si le jeu est l'écran au sommet de la pile GameStack.
+  //    navigation.goBack(); 
+  //     // 3. Naviguer vers l'écran DailyChallenge (le tab)
+  //     // On utilise la navigation du tab (MainTabs), qui est accessible depuis n'importe quel enfant.
+  //     // Assurez-vous que le nom de l'onglet est bien 'DailyChallenge' dans MainTabs.tsx
+  //     navigation.navigate('DailyChallenge' as any); 
+  // };
 
-const handleChallengeQuit = () => {
-  onClose(); // Fermer le modal
-  
-  if (isDailyChallenge) {
-    // Attendre un peu pour éviter les conflits
-    setTimeout(() => {
-      // Utiliser notre service de navigation
-    //  DailyChallengeNavigation.getInstance().exitChallenge(navigation);
-    DailyChallengeNavigation.exitChallenge(navigation);
-    }, 100);
-  }
-};
-// AJOUTER cet effet pour nettoyer quand le modal se ferme
-React.useEffect(() => {
-  return () => {
-    // Quand le modal se démonte, vérifier si c'était un défi
+  const handleChallengeQuit = () => {
+    onClose(); // Fermer le modal
+
     if (isDailyChallenge) {
-      DailyChallengeNavigation.clearChallenge();
+      // Attendre un peu pour éviter les conflits
+      setTimeout(() => {
+        // Utiliser notre service de navigation
+        //  DailyChallengeNavigation.getInstance().exitChallenge(navigation);
+        DailyChallengeNavigation.exitChallenge(navigation);
+      }, 100);
     }
   };
-}, [isDailyChallenge]);
+  // AJOUTER cet effet pour nettoyer quand le modal se ferme
+  React.useEffect(() => {
+    return () => {
+      // Quand le modal se démonte, vérifier si c'était un défi
+      if (isDailyChallenge) {
+        DailyChallengeNavigation.clearChallenge();
+      }
+    };
+  }, [isDailyChallenge]);
 
   // On ne peut pas revenir avant le niveau 1
   //const showPrevButton = level > 1; 
@@ -384,31 +417,57 @@ React.useEffect(() => {
               {/* Boutons de Carrière (UNIQUEMENT si ce n'est PAS un défi quotidien) */}
               {!isDailyChallenge ? (
                 <>
-                  <Button
+                  {/* <Button
                     title="Rejouer"
                     onPress={handleReplay}
                     color={theme.primary}
+                  /> */}
+                  <IconButton
+                    title="Rejouer"
+                    icon="replay"
+                    color={theme.primary}
+                    onPress={handleReplay}
                   />
                   {showNextButton && isVictory && (
-                    <Button
+                    // <Button
+                    //   title="Suivant"
+                    //   onPress={handleNext}
+                    //   color={theme.success}
+                    //   disabled={!isNewLevelUnlocked && level >= maxLevels}
+                    // />
+                    <IconButton
                       title="Suivant"
-                      onPress={handleNext}
+                      icon="arrow-right-circle"
                       color={theme.success}
+                      onPress={handleNext}
                       disabled={!isNewLevelUnlocked && level >= maxLevels}
                     />
                   )}
-                  <Button
+                  {/* <Button
                     title="Quitter"
                     onPress={handleQuit} // Quitter vers LevelSelect
                     color={theme.secondary}
+                  /> */}
+                  <IconButton
+                    title="Quitter"
+                    icon="exit-to-app"
+                    color={theme.secondary}
+                    onPress={handleQuit}
                   />
                 </>
               ) : (
                 // Bouton Unique pour le Défi Quotidien
-                <Button
+                // <Button
+                //   title="Terminer et Quitter"
+                //   onPress={handleChallengeQuit} // Quitter vers DailyChallengeScreen
+                //   color={theme.secondary}
+                // />
+                <IconButton
                   title="Terminer et Quitter"
-                  onPress={handleChallengeQuit} // Quitter vers DailyChallengeScreen
+                  icon="check-circle"
                   color={theme.secondary}
+                  backgroundColor={theme.success + '30'}
+                  onPress={handleChallengeQuit}
                 />
               )}
             </View>
@@ -439,7 +498,7 @@ const styles = StyleSheet.create({
   modal: {
     width: '90%',
     maxWidth: 380,
-    padding: 25,
+    padding: 15,
     borderRadius: 15,
     alignItems: 'center',
   },
@@ -475,10 +534,36 @@ const styles = StyleSheet.create({
   },
   navContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    //justifyContent: 'space-around',
+    justifyContent: 'space-between',
     width: '100%',
     marginTop: 20,
   },
+
+  //style pour les nouveaux boutons
+  iconButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 6,
+    borderRadius: 12,
+    minWidth: 90,
+    marginHorizontal: 4,
+  },
+  buttonIcon: {
+    marginRight: 4,
+  },
+  buttonText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  disabledButton: {
+    opacity: 0.5,
+    backgroundColor: '#eee',
+  },
+
+
 });
 
 export default GameEndModal;

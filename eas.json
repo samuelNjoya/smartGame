@@ -11,11 +11,25 @@
     "preview": {
       "distribution": "internal",
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+       
+        "image": "latest",
+        "autoIncrement": true
+      
+      },
+  
+      "env": {
+        "EXPO_NO_BUNDLE_SPLITTING": "1",
+        "EXPO_IMAGE_OPTIMIZE": "1",
+        "NODE_ENV": "production"
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle",
+         "gradleCommand": ":app:bundleRelease" 
+      }
     }
   },
   "submit": {

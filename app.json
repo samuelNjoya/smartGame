@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
@@ -28,6 +28,8 @@
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#3c0a6b"
       },
+       "enableShrinkResourcesInReleaseBuilds": true,
+      "enableProguardInReleaseBuilds": true,
       "edgeToEdgeEnabled": true,
       "package": "com.smartgames.mobile",
       "splash": {
@@ -43,6 +45,29 @@
       "eas": {
         "projectId": "0975d54e-52fc-467a-9754-f02a67428acf"
       }
-    }
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "useLegacyPackaging": false,
+            
+            "ndk": {
+              "abiFilters": ["armeabi-v7a", "arm64-v8a"]
+            },
+            
+           
+            "minSdkVersion": 21,  
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34
+                       
+          
+          }
+        }
+      ]
+    ]
   }
 }

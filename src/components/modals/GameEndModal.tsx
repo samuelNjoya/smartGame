@@ -534,8 +534,8 @@ const styles = StyleSheet.create({
   },
   navContainer: {
     flexDirection: 'row',
-    //justifyContent: 'space-around',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
+   // justifyContent: 'space-between',
     width: '100%',
     marginTop: 20,
   },

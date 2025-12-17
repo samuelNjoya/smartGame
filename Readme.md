@@ -148,7 +148,8 @@ eas build:configure //configurer le projet une seule fois cree le fichier eas.js
 eas whoami se rassurer d'etre connecter
 
 <!-- lien final expire le 29/12 -->
-https://expo.dev/accounts/samuel24/projects/smart-games/builds/90e39452-84bb-4a42-8635-de09a5b21246
+// https://expo.dev/accounts/samuel24/projects/smart-games/builds/90e39452-84bb-4a42-8635-de09a5b21246
+https://expo.dev/accounts/samuel24/projects/smart-games/builds/ea5285dc-3b10-44ec-9686-6f4e02f7b563
 eas build -p android --profile preview  //lancer la generation d'un apk installable partout
 eas build -p android --profile production  // en production 
 npx expo prebuild --clean

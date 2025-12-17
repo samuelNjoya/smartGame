@@ -136,8 +136,10 @@ dans app.json ajouter
   }
 }
 
-dans app.json  "newArchEnabled": false, pour reduire la taille entre 40 et 50 Mo de 81 a 41
+dans app.json  "newArchEnabled": false, pour reduire la taille entre 40 et 50 Mo de 81 a 41 mais cause pb
 
+# supprime le node_module et package json et npm install pour encore tout installer
+rmdir /s /q node_modules && del package-lock.json
 
 # pour installer  EAS expo application service
 npm install -g eas-cli
@@ -146,7 +148,7 @@ eas build:configure //configurer le projet une seule fois cree le fichier eas.js
 eas whoami se rassurer d'etre connecter
 
 <!-- lien final expire le 29/12 -->
-https://expo.dev/accounts/samuel24/projects/smart-games/builds/84885f38-3ba6-42ef-97f3-0c1dd9582692
+https://expo.dev/accounts/samuel24/projects/smart-games/builds/90e39452-84bb-4a42-8635-de09a5b21246
 eas build -p android --profile preview  //lancer la generation d'un apk installable partout
 eas build -p android --profile production  // en production 
 npx expo prebuild --clean

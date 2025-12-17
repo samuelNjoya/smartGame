@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
@@ -60,9 +60,9 @@
             },
             
            
-            "minSdkVersion": 21,  
-            "compileSdkVersion": 34,
-            "targetSdkVersion": 34
+            "minSdkVersion": 24,  
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35
                        
           
           }

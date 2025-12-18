@@ -16,31 +16,32 @@ export const NEURO_COLORS = [
   '#118AB2', // Bleu
   '#073B4C', // Bleu Foncé
   '#9D4EDD', // Violet
+  '#0d0f0eff', // Violet
 ];
 
 export const NEURO_CONFIG: Record<NeuroDifficulty, DifficultyConfig> = {
   easy: {
     gridSize: 3,
-    availableColors: NEURO_COLORS.slice(0, 3), // 3 couleurs
+    availableColors: NEURO_COLORS.slice(0, 4), // 4 couleurs
     baseTime: 4.5,
-    minTargetTiles: 3,
+    minTargetTiles: 4,
   },
   medium: {
     gridSize: 4,
-    availableColors: NEURO_COLORS.slice(0, 4), // 4 couleurs
-    baseTime: 4,
-    minTargetTiles: 4,
-  },
-  hard: {
-    gridSize: 5,
     availableColors: NEURO_COLORS.slice(0, 5), // 5 couleurs
     baseTime: 4,
     minTargetTiles: 5,
   },
+  hard: {
+    gridSize: 5,
+    availableColors: NEURO_COLORS.slice(0, 6), // 6 couleurs
+    baseTime: 4,
+    minTargetTiles: 6,
+  },
   master: {
     gridSize: 6,
-    availableColors: NEURO_COLORS.slice(0, 6), // 6 couleurs
+    availableColors: NEURO_COLORS.slice(0, 7), // 7 couleurs
     baseTime: 3.5, // Très rapide
-    minTargetTiles: 6,
+    minTargetTiles: 7,
   },
 };

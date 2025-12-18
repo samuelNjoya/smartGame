@@ -12,35 +12,127 @@ export interface MathProblem {
   timeLimit: number; // Temps en secondes
 }
 
+// Fonction de calcul sécurisée qui respecte les priorités mathématiques
+const calculateExpression = (numbers: number[], operations: string[]): number => {
+  // 1. Traiter d'abord les multiplications et divisions
+  const processedNumbers: number[] = [numbers[0]];
+  const processedOperations: string[] = [];
+  
+  for (let i = 0; i < operations.length; i++) {
+    const currentNumber = numbers[i + 1];
+    const currentOperation = operations[i];
+    
+    if (currentOperation === '*' || currentOperation === '/') {
+      // Appliquer l'opération au dernier nombre traité
+      const lastIndex = processedNumbers.length - 1;
+      if (currentOperation === '*') {
+        processedNumbers[lastIndex] *= currentNumber;
+      } else {
+        processedNumbers[lastIndex] /= currentNumber;
+      }
+    } else {
+      // Addition ou soustraction : garder pour plus tard
+      processedNumbers.push(currentNumber);
+      processedOperations.push(currentOperation);
+    }
+  }
+  
+  // 2. Traiter les additions et soustractions
+  let result = processedNumbers[0];
+  for (let i = 0; i < processedOperations.length; i++) {
+    if (processedOperations[i] === '+') {
+      result += processedNumbers[i + 1];
+    } else {
+      result -= processedNumbers[i + 1];
+    }
+  }
+  
+  return Math.round(result * 100) / 100; // Arrondir à 2 décimales
+};
+
 const getRandomInt = (min: number, max: number) => {
   min = Math.ceil(min);
   max = Math.floor(max);
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
-const generateOptions = (answer: number, count: number): number[] => {
+// Fonction pour générer une fraction simple
+const generateSimpleFraction = (): { numerator: number; denominator: number; value: number } => {
+  const denominator = getRandomInt(2, 8); // Dénominateur entre 2 et 8
+  const numerator = getRandomInt(1, denominator - 1); // Numérateur < dénominateur
+  return {
+    numerator,
+    denominator,
+    value: numerator / denominator
+  };
+};
+
+// Fonction pour générer un carré parfait pour les racines
+const generatePerfectSquare = (maxRoot: number = 20) => {
+  const root = getRandomInt(2, maxRoot);
+  return {
+    root,
+    square: root * root
+  };
+};
+
+const generateOptions = (answer: number, count: number, difficulty: GameDifficulty): number[] => {
   const options = new Set<number>([answer]);
-  let range = Math.max(5, Math.abs(answer) / 2); // Plage d'options basée sur la réponse
+  
+  // Plage d'options adaptée à la difficulté
+  let range: number;
+  switch(difficulty) {
+    case 'easy':
+      range = Math.max(3, Math.abs(answer) / 3);
+      break;
+    case 'medium':
+      range = Math.max(5, Math.abs(answer) / 2);
+      break;
+    case 'hard':
+    case 'master':
+      range = Math.max(8, Math.abs(answer) * 0.8);
+      break;
+  }
   
   while (options.size < count) {
-    let wrongAnswer = answer + getRandomInt(-range, range);
+    // Générer des options variées
+    let wrongAnswer: number;
     
-    // Évite les réponses triviales ou trop proches
-    if (wrongAnswer !== answer && Math.abs(wrongAnswer - answer) > 1) {
-      options.add(wrongAnswer);
+    // 50% de chance d'option proche, 50% de chance d'option éloignée
+    if (Math.random() < 0.5) {
+      // Option proche (±1 à ±range/2)
+      const offset = getRandomInt(-Math.floor(range/2), Math.floor(range/2));
+      wrongAnswer = answer + (offset !== 0 ? offset : 1);
     } else {
-      // Pour les cas où la réponse est 0 ou petit, on s'assure d'avoir des options variées
-      if (wrongAnswer === answer) {
-        wrongAnswer += (Math.random() > 0.5 ? 2 : -2);
+      // Option plus éloignée
+      wrongAnswer = answer + getRandomInt(-range, range);
+    }
+    
+    // Éviter les doublons et les réponses trop proches
+    const isTooClose = options.has(wrongAnswer) || 
+                      options.has(wrongAnswer + 1) || 
+                      options.has(wrongAnswer - 1);
+    
+    // Pour les fractions, autoriser des valeurs proches (ex: 0.25, 0.33, 0.5)
+    if (difficulty === 'master' && answer % 1 !== 0) {
+      if (!isTooClose && Math.abs(wrongAnswer - answer) > 0.05) {
+        options.add(Number(wrongAnswer.toFixed(2)));
       }
+    } else if (!isTooClose && Math.abs(wrongAnswer - answer) > 0.5) {
       options.add(wrongAnswer);
+    }
+    
+    // Éviter la boucle infinie
+    if (options.size < count && options.size > 1) {
+      // Ajouter une option évidente si nécessaire
+      const obviousWrong = answer + (answer > 0 ? -range : range);
+      options.add(obviousWrong);
     }
   }
 
-  // Mélange des options
+  // Mélanger les options
   return Array.from(options).sort(() => Math.random() - 0.5);
 };
-
 
 /**
  * Génère une opération mathématique complète en fonction de la difficulté et du niveau.
@@ -50,102 +142,167 @@ const generateProblem = (difficulty: GameDifficulty, problemId: number): MathPro
   let operation: Operation;
   let answer: number;
   let question: string;
-  let numOptions = 4; // 4 choix par défaut
+  let numOptions = 4;
   let timeLimit = 15;
-  let baseXp = 0;//10
   
-  // Progression dynamique des niveaux (nombre d'opérations et plages de nombres)
-  const numProblems = getRandomInt(10, 20);
-  const complexityFactor = Math.min(1, problemId / numProblems); // Problèmes plus complexes en fin de niveau
+  // Progression dynamique basée sur l'ID du problème
+  const complexityFactor = Math.min(1, problemId / 20); // Sur 20 problèmes max
 
   switch (difficulty) {
     case 'easy':
-      timeLimit = 15; baseXp = 0; numOptions = 3;
-      // Additions et Soustractions. Nombres jusqu'à 20 (début) à 50 (fin)
-      const maxEasyNum = getRandomInt(20, 50);
+      timeLimit = 15;
+      numOptions = 3;
+      
+      // Additions et soustractions simples
+      const maxEasyNum = 20 + Math.floor(complexityFactor * 30); // 20 à 50
       num1 = getRandomInt(1, maxEasyNum);
-      num2 = getRandomInt(1, maxEasyNum * complexityFactor);
+      num2 = getRandomInt(1, maxEasyNum);
       
       operation = Math.random() > 0.5 ? '+' : '-';
       
-      if (operation === '-') {
-        if (num2 > num1) [num1, num2] = [num2, num1]; // Assure un résultat non négatif
+      // Pour les soustractions, éviter les nombres négatifs
+      if (operation === '-' && num2 > num1) {
+        [num1, num2] = [num2, num1];
       }
-      answer = eval(`${num1} ${operation} ${num2}`);
+      
+      answer = operation === '+' ? num1 + num2 : num1 - num2;
       question = `${num1} ${operation} ${num2} = ?`;
       break;
 
     case 'medium':
-      timeLimit = 10; baseXp = 0;
-      // Multiplications, Additions/Soustractions plus larges. Nombres jusqu'à 100
+      timeLimit = 12;
       
-      if (Math.random() < 0.3) { // 30% de Multiplications
-        num1 = getRandomInt(2, 10); // Tables
+      // 40% multiplications, 60% additions/soustractions
+      if (Math.random() < 0.4) {
+        num1 = getRandomInt(2, 10 + Math.floor(complexityFactor * 5)); // 2-15
         num2 = getRandomInt(2, 10);
         operation = '*';
         answer = num1 * num2;
-        question = `${num1} ${operation} ${num2} = ?`;
-      } else { // 70% Add/Sub plus larges
-        const maxMedNum = getRandomInt(50, 100);
+        question = `${num1} × ${num2} = ?`;
+      } else {
+        const maxMedNum = 50 + Math.floor(complexityFactor * 50); // 50-100
         num1 = getRandomInt(10, maxMedNum);
-        num2 = getRandomInt(10, maxMedNum * (1 - complexityFactor * 0.5));
+        num2 = getRandomInt(10, maxMedNum);
         
         operation = Math.random() > 0.5 ? '+' : '-';
-        if (operation === '-') {
-          if (num2 > num1) [num1, num2] = [num2, num1];
+        if (operation === '-' && num2 > num1) {
+          [num1, num2] = [num2, num1];
         }
-        answer = eval(`${num1} ${operation} ${num2}`);
+        
+        answer = operation === '+' ? num1 + num2 : num1 - num2;
         question = `${num1} ${operation} ${num2} = ?`;
       }
       break;
 
     case 'hard':
-      timeLimit = 8; baseXp = 0;
-      // Opérations mixtes (3 termes), Division
-      const type = Math.random();
-
-      if (type < 0.3) { // Division (Résultats entiers)
-        num2 = getRandomInt(2, 10); // Diviseur
-        answer = getRandomInt(2, 10); // Réponse
+      timeLimit = 10;
+      
+      // 25% divisions, 75% opérations mixtes
+      if (Math.random() < 0.25) {
+        // Division avec résultat entier
+        num2 = getRandomInt(2, 12); // Diviseur
+        answer = getRandomInt(2, 12); // Résultat
         num1 = num2 * answer; // Dividende
         operation = '/';
-        question = `${num1} ${operation} ${num2} = ?`;
-      } else { // 3 termes (Mixte)
-        num1 = getRandomInt(5, 15);
-        num2 = getRandomInt(1, 10);
-        num3 = getRandomInt(1, 5);
+        question = `${num1} ÷ ${num2} = ?`;
+      } else {
+        // Opérations à 3 termes avec priorité
+        num1 = getRandomInt(10, 30);
+        num2 = getRandomInt(2, 15);
+        num3 = getRandomInt(2, 10);
         
-        const op1 = Math.random() > 0.5 ? '+' : '-';
-        const op2 = Math.random() > 0.5 ? '*' : '+';
+        const operations: string[] = [];
+        operations.push(Math.random() > 0.5 ? '+' : '-');
+        operations.push(Math.random() > 0.7 ? '*' : (Math.random() > 0.5 ? '+' : '-'));
         
-        // S'assurer de respecter les règles de priorité (multiplication avant)
-        answer = eval(`${num1} ${op1} ${num2} ${op2} ${num3}`);
-        question = `${num1} ${op1} ${num2} ${op2} ${num3} = ?`;
+        // Calcul avec priorité
+        answer = calculateExpression([num1, num2, num3], operations);
+        
+        // Formater la question proprement
+        question = `${num1} ${operations[0]} ${num2} ${operations[1]} ${num3} = ?`;
       }
       break;
 
     case 'master':
-      timeLimit = 8; baseXp = 0;
-      // Nombres négatifs, Carrés, Vitesse
-      const masterType = Math.random();
+      timeLimit = 8;
       
-      if (masterType < 0.3) { // Carrés simples
-        num1 = getRandomInt(5, 15);
+      // Répartition des types de problèmes pour Master :
+      // 20% Carrés, 20% Racines, 20% Fractions, 40% Nombres négatifs/complexes
+      const problemType = Math.random();
+      
+      if (problemType < 0.2) {
+        // Carrés simples
+        num1 = getRandomInt(5, 20);
         answer = num1 * num1;
         question = `${num1}² = ?`;
-      } else { // Nombres négatifs et 3 termes complexes
-        num1 = getRandomInt(-20, 30);
-        num2 = getRandomInt(-10, 20);
-        num3 = getRandomInt(-5, 5);
+      } 
+      else if (problemType < 0.4) {
+        // Racines carrées de carrés parfaits
+        const { root, square } = generatePerfectSquare(15);
+        answer = root;
+        question = `√${square} = ?`;
+      }
+      else if (problemType < 0.6) {
+        // Fractions simples
+        const fraction1 = generateSimpleFraction();
+        const fraction2 = generateSimpleFraction();
         
-        const op1 = Math.random() > 0.5 ? '+' : '-';
-        const op2 = Math.random() > 0.5 ? '+' : '-';
+        // 50% addition, 50% soustraction de fractions
+        if (Math.random() > 0.5) {
+          // Addition de fractions avec même dénominateur
+          if (fraction1.denominator === fraction2.denominator) {
+            answer = fraction1.value + fraction2.value;
+            question = `${fraction1.numerator}/${fraction1.denominator} + ${fraction2.numerator}/${fraction2.denominator} = ?`;
+          } else {
+            // Fractions avec dénominateurs différents (simples)
+            const lcm = fraction1.denominator * fraction2.denominator;
+            const num1Adj = fraction1.numerator * fraction2.denominator;
+            const num2Adj = fraction2.numerator * fraction1.denominator;
+            answer = (num1Adj + num2Adj) / lcm;
+            question = `${fraction1.numerator}/${fraction1.denominator} + ${fraction2.numerator}/${fraction2.denominator} = ?`;
+          }
+        } else {
+          // Soustraction (toujours résultat positif)
+          const maxFraction = fraction1.value > fraction2.value ? fraction1 : fraction2;
+          const minFraction = fraction1.value > fraction2.value ? fraction2 : fraction1;
+          
+          if (maxFraction.denominator === minFraction.denominator) {
+            answer = maxFraction.value - minFraction.value;
+            question = `${maxFraction.numerator}/${maxFraction.denominator} - ${minFraction.numerator}/${minFraction.denominator} = ?`;
+          } else {
+            const lcm = maxFraction.denominator * minFraction.denominator;
+            const num1Adj = maxFraction.numerator * minFraction.denominator;
+            const num2Adj = minFraction.numerator * maxFraction.denominator;
+            answer = (num1Adj - num2Adj) / lcm;
+            question = `${maxFraction.numerator}/${maxFraction.denominator} - ${minFraction.numerator}/${minFraction.denominator} = ?`;
+          }
+        }
         
-        answer = eval(`${num1} ${op1} ${num2} ${op2} ${num3}`);
-        question = `${num1} ${op1} ${num2} ${op2} ${num3} = ?`;
+        // Arrondir la réponse pour les fractions
+        answer = Math.round(answer * 100) / 100;
+      }
+      else {
+        // Nombres négatifs et opérations complexes
+        num1 = getRandomInt(-25, 40);
+        num2 = getRandomInt(-20, 30);
+        num3 = getRandomInt(-10, 15);
         
-        // Nettoyage de l'affichage (- -)
-        question = question.replace(/\+ -/g, '- ');
+        const operations: string[] = [];
+        operations.push(Math.random() > 0.5 ? '+' : '-');
+        
+        // 50% de chance d'avoir une troisième opération
+        if (Math.random() > 0.5) {
+          operations.push(Math.random() > 0.3 ? '*' : (Math.random() > 0.5 ? '+' : '-'));
+          answer = calculateExpression([num1, num2, num3], operations);
+          question = `${num1} ${operations[0]} ${num2} ${operations[1]} ${num3} = ?`;
+        } else {
+          answer = calculateExpression([num1, num2], operations);
+          question = `${num1} ${operations[0]} ${num2} = ?`;
+        }
+        
+        // Nettoyer l'affichage des doubles signes
+        question = question.replace(/(\d+) \+ -(\d+)/g, '$1 - $2')
+                          .replace(/(\d+) - -(\d+)/g, '$1 + $2');
       }
       break;
   }
@@ -154,8 +311,8 @@ const generateProblem = (difficulty: GameDifficulty, problemId: number): MathPro
     id: problemId,
     question,
     answer,
-    options: generateOptions(answer, numOptions),
-    baseXp,
+    options: generateOptions(answer, numOptions, difficulty),
+    baseXp: 0, // À définir ailleurs
     timeLimit,
   };
 };
@@ -164,13 +321,41 @@ const generateProblem = (difficulty: GameDifficulty, problemId: number): MathPro
  * Génère l'ensemble des problèmes pour un niveau.
  */
 export const generateMathLevel = (difficulty: GameDifficulty, level: number): MathProblem[] => {
-  //const numProblems = 10 + Math.floor((Math.min(level, 100) / 100) * 10); // 10 à 20 problèmes
-  const numProblems = 10; // Fixe à 10 problèmes
+  // Nombre de problèmes adapté à la difficulté
+  const baseProblems = {
+    easy: 10,
+    medium: 10,
+    hard: 10,
+    master: 10
+  };
+  
+  const numProblems = baseProblems[difficulty];
   const problems: MathProblem[] = [];
 
   for (let i = 0; i < numProblems; i++) {
-    problems.push(generateProblem(difficulty, i));
+    // Augmenter légèrement la complexité avec le niveau
+    const adjustedProblemId = i + (level * 2);
+    problems.push(generateProblem(difficulty, adjustedProblemId));
   }
 
   return problems;
+};
+
+// Fonction utilitaire pour tester (optionnelle)
+export const testMathGenerator = () => {
+  console.log("=== TEST MATH GENERATOR ===");
+  
+  const difficulties: GameDifficulty[] = ['easy', 'medium', 'hard', 'master'];
+  
+  difficulties.forEach(difficulty => {
+    console.log(`\n--- ${difficulty.toUpperCase()} ---`);
+    const problems = generateMathLevel(difficulty, 1);
+    
+    problems.slice(0, 3).forEach(problem => {
+      console.log(`Q: ${problem.question}`);
+      console.log(`A: ${problem.answer}`);
+      console.log(`Options: ${problem.options.join(', ')}`);
+      console.log(`Time: ${problem.timeLimit}s\n`);
+    });
+  });
 };

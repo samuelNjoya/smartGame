@@ -84,95 +84,37 @@ const simpleHash = (str: string): number => {
 //     icon: selectedGame.icon,
 //     difficulty,
 //     targetLevel: level,
-//     bonusXp: BONUS_XP,
-//      date: dateString // ⭐⭐⭐ AJOUTER LA DATE ⭐⭐⭐
+//     bonusXp: BONUS_XP
 //   };
 // };
-
 const getChallengeForDate = (date: Date): DailyChallengeConfig => {
   const dateString = date.toISOString().split('T')[0]; // "2024-02-11"
   
-  // 1. CRÉATION DU SEED (GRAINE ALÉATOIRE)
-  // Le seed est un nombre qui sert de base pour tous les calculs aléatoires
-  // Même date = même seed = même défi pour tous les joueurs
-  const timestamp = date.getTime(); // Ex: 1707676800000 (millisecondes depuis 1970)
-  const seed = simpleHash(dateString); //parseInt(timestamp.toString().slice(-9)); // Prendre les 9 derniers chiffres
-  // Ex: 1707676800000 → "1707676800000" → slice(-9) → "767680000" → parseInt → 767680000
+  // Utiliser le timestamp comme seed
+  const timestamp = date.getTime();
+  const seed = parseInt(timestamp.toString().slice(-9)); // Prendre les 9 derniers chiffres
   
-  // 2. SÉLECTION DU JEU
-  // Filtrer les jeux non disponibles pour les défis quotidiens
-  const availableGames = GAMES.filter(g => g.id !== 'NeuroPuzzle');
-  
-  // CALCUL: (seed % 1000) → nombre entre 0 et 999
-  //         % availableGames.length → index entre 0 et (nbJeux - 1)
-  // Ex: seed = 767680000, 1000 jeux → 767680000 % 1000 = 0 → 0 % 10 = 0 (premier jeu)
+  // 1. Choisir le jeu
+  const availableGames = GAMES.filter(g => g.id !== 'NeuroPuzzle'); // g => g.id !== 'RandomGame' && g.id !== 'NeuroPuzzle'
   const gameIndex = (seed % 1000) % availableGames.length;
   const selectedGame = availableGames[gameIndex];
 
-  // 3. SÉLECTION DE LA DIFFICULTÉ AVEC PROBABILITÉS PERSONNALISABLES
-  // ⭐⭐⭐ CONFIGURATION DES PROBABILITÉS (MODIFIABLE) ⭐⭐⭐
-  // Vous pouvez changer ces pourcentages comme vous voulez !
-  const DIFFICULTY_PROBABILITIES = {
-    master: 50,   // 50% de chance d'apparaître
-    hard: 30,     // 30% de chance
-    medium: 15,   // 15% de chance
-    easy: 5       // 5% de chance (très rare)
+  // 2. Choisir la difficulté (aléatoire entre les 4)
+  const difficulties: GameDifficulty[] = ['easy', 'medium', 'hard', 'master'];
+  const difficultyIndex = ((seed >> 10) % 100) % difficulties.length;
+  const difficulty = difficulties[difficultyIndex];
+
+  // 3. Choisir un niveau selon la difficulté
+  const levelRanges = {
+    easy: { min: 1, max: 30 },
+    medium: { min: 10, max: 50 },
+    hard: { min: 15, max: 70 },
+    master: { min: 20, max: 75 }
   };
   
-  // CALCUL: (seed >> 10) → décale le seed de 10 bits vers la droite
-  //         % 100 → nombre entre 0 et 99 (pourcentage)
-  // Ex: seed = 767680000 → (767680000 >> 10) = 749687 → 749687 % 100 = 87
-  const difficultySeed = ((seed >> 10) % 100); // Nombre entre 0 et 99
-  
-  let difficulty: GameDifficulty;
-  
-  // Répartition selon les probabilités configurées :
-  // easy: 0-4 (5%)
-  // medium: 5-19 (15%)
-  // hard: 20-49 (30%)
-  // master: 50-99 (50%)
-  if (difficultySeed < DIFFICULTY_PROBABILITIES.easy) {
-    difficulty = 'easy';
-  } else if (difficultySeed < DIFFICULTY_PROBABILITIES.easy + DIFFICULTY_PROBABILITIES.medium) {
-    difficulty = 'medium';
-  } else if (difficultySeed < DIFFICULTY_PROBABILITIES.easy + DIFFICULTY_PROBABILITIES.medium + DIFFICULTY_PROBABILITIES.hard) {
-    difficulty = 'hard';
-  } else {
-    difficulty = 'master';
-  }
+  const range = levelRanges[difficulty];
+  const level = range.min + ((seed >> 20) % (range.max - range.min + 1));
 
-  // 4. SÉLECTION DU NIVEAU SELON LA DIFFICULTÉ
-  // ⭐⭐⭐ CONFIGURATION DES NIVEAUX (MODIFIABLE) ⭐⭐⭐
-  // min = niveau minimum, max = niveau maximum
-  const LEVEL_RANGES = {
-    easy: { min: 50, max: 100 },    // Niveaux 1 à 30
-    medium: { min: 30, max: 120 }, // Niveaux 10 à 50
-    hard: { min: 15, max: 100 },   // Niveaux 15 à 70
-    master: { min: 20, max: 75 }  // Niveaux 20 à 75
-  };
-  
-  // Explications des min/max :
-  // - easy: Débutants, niveaux très faciles (1-30)
-  // - medium: Joueurs intermédiaires, défis modérés (10-50)
-  // - hard: Joueurs avancés, défis difficiles (15-70)
-  // - master: Experts, défis très difficiles (20-75)
-  // Note: Les plages se chevauchent pour une progression fluide
-  
-  const range = LEVEL_RANGES[difficulty];
-  
-  // CALCUL DU NIVEAU :
-  // 1. (seed >> 20) → décale le seed de 20 bits vers la droite
-  // 2. % (max - min + 1) → nombre entre 0 et (étendue des niveaux)
-  // 3. + min → ajuste dans la plage min-max
-  // 
-  // Exemple pour 'master' (min=20, max=75) :
-  // seed = 767680000 → (767680000 >> 20) = 732 → 732 % (75-20+1) = 732 % 56 = 4
-  // niveau = 20 + 4 = 24
-  const levelRangeSize = range.max - range.min + 1; // Nombre de niveaux possibles
-  const levelSeed = (seed >> 20) % levelRangeSize; // Index dans la plage
-  const level = range.min + levelSeed; // Niveau final
-
-  // 5. RETOUR DU DÉFI CONFIGURÉ
   return {
     gameId: selectedGame.id as GameId,
     gameName: selectedGame.name,
@@ -180,10 +122,9 @@ const getChallengeForDate = (date: Date): DailyChallengeConfig => {
     difficulty,
     targetLevel: level,
     bonusXp: BONUS_XP,
-    date: dateString
+     date: dateString // ⭐⭐⭐ AJOUTER LA DATE ⭐⭐⭐
   };
 };
-
 
 const getTodayStatusKey = () => {
   const dateString = new Date().toISOString().split('T')[0];

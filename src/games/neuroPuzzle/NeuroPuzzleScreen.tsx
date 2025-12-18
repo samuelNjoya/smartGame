@@ -8,7 +8,7 @@ import { useSettings } from '../../hooks/useSettings';
 import { usePlayer } from '../../hooks/usePlayer';
 import { useSound } from '../../hooks/useSound';
 import { GameStackParamList } from '../../navigation/types';
-import { NEURO_CONFIG, NeuroDifficulty } from '../../constants/neuroPuzzleConfig';
+import { NEURO_CONFIG, NeuroDifficulty } from './neuroPuzzleConfig';
 import { generateNeuroGrid, NeuroCell, generateLevelParams } from './neuroPuzzle.logic';
 import GameEndModal from '../../components/modals/GameEndModal';
 import GameScreenWrapper from '../../components/games/GameScreenWrapper'; // ⭐⭐⭐ AJOUT ⭐⭐⭐

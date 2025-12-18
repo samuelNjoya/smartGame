@@ -1,5 +1,5 @@
 // src/games/neuroPuzzle/neuroPuzzle.logic.ts
-import { NEURO_CONFIG, NeuroDifficulty } from '../../constants/neuroPuzzleConfig';
+import { NEURO_CONFIG, NeuroDifficulty } from './neuroPuzzleConfig';
 
 export interface NeuroCell {
   id: number;

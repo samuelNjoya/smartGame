@@ -201,7 +201,7 @@ const headerScaleY = scrollY.interpolate({
               </View>
               <View style={styles.statItem}>
                 <Ionicons name="trophy-outline" size={14} color="#FFFFFF" />
-                <Text style={styles.statText}>{game.maxLevel || '525'} lvls</Text>
+                <Text style={styles.statText}>{game.maxLevel || '700'} lvls</Text>
               </View>
             </View>
           </LinearGradient>

@@ -11,7 +11,7 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
@@ -44,12 +44,32 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
   const scaleValue = new Animated.Value(0);
   const opacityValue = new Animated.Value(0);
 
-  // Configuration par type d'alerte
+  // Configuration par type d'alerte - Couleurs améliorées
   const alertConfig = {
-    info: { icon: 'information', color: '#4361EE', bgColor: '#EFF2FF' },
-    warning: { icon: 'alert', color: '#FF9800', bgColor: '#FFF3E0' },
-    error: { icon: 'close-circle', color: '#F44336', bgColor: '#FFEBEE' },
-    success: { icon: 'check-circle', color: '#4CAF50', bgColor: '#E8F5E8' },
+    info: { 
+      icon: 'information-circle', 
+      color: '#4361EE', 
+      bgColor: '#EFF6FF',
+      iconColor: '#3B82F6'
+    },
+    warning: { 
+      icon: 'warning', 
+      color: '#F59E0B', 
+      bgColor: '#FFFBEB',
+      iconColor: '#D97706'
+    },
+    error: { 
+      icon: 'close-circle', 
+      color: '#EF4444', 
+      bgColor: '#FEF2F2',
+      iconColor: '#DC2626'
+    },
+    success: { 
+      icon: 'checkmark-circle', 
+      color: '#10B981', 
+      bgColor: '#ECFDF5',
+      iconColor: '#059669'
+    },
   };
 
   const config = alertConfig[type];
@@ -109,94 +129,84 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
       onRequestClose={onClose}
     >
       <View style={styles.modalContainer}>
+        {/* Fond semi-transparent */}
+        <TouchableOpacity
+          style={styles.backdrop}
+          activeOpacity={1}
+          onPress={handleBackdropPress}
+        />
+
+        {/* Contenu de l'alerte */}
         <Animated.View
           style={[
-            styles.backdrop,
+            styles.alertContainer,
             {
+              transform: [{ scale: scaleValue }],
               opacity: opacityValue,
             },
           ]}
         >
-          <TouchableOpacity
-            style={styles.backdropTouchable}
-            activeOpacity={1}
-            onPress={handleBackdropPress}
-          />
-        </Animated.View>
-
-        <View style={styles.alertContainer}>
-          <Animated.View
-            style={[
-              styles.alertBox,
-              {
-                transform: [{ scale: scaleValue }],
-                opacity: opacityValue,
-                backgroundColor: '#FFFFFF',
-              },
-            ]}
-          >
-            {/* En-tête de l'alerte */}
-            <View style={[styles.header, { backgroundColor: config.bgColor }]}>
-              {showIcon && (
-                <MaterialCommunityIcons
-                  name={config.icon as any}
-                  size={28}
-                  color={config.color}
-                  style={styles.icon}
-                />
-              )}
-              <Text style={styles.title}>{title}</Text>
+          {/* Icône circulaire en haut */}
+          {showIcon && (
+            <View style={[styles.iconContainer, { backgroundColor: config.bgColor }]}>
+              <Ionicons
+                name={config.icon as any}
+                size={32}
+                color={config.iconColor}
+              />
             </View>
+          )}
 
-            {/* Corps du message */}
-            <View style={styles.body}>
-              <Text style={styles.message}>{message}</Text>
-            </View>
+          {/* Contenu textuel */}
+          <View style={styles.content}>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.message}>{message}</Text>
+          </View>
 
-            {/* Boutons d'action */}
-            <View style={styles.buttonsContainer}>
-              {buttons.map((button, index) => {
-                const isCancel = button.style === 'cancel';
-                const isDestructive = button.style === 'destructive';
-                
-                let buttonStyle = styles.buttonDefault;
-                let textStyle = styles.buttonTextDefault;
-                let textColor = config.color;
+          {/* Boutons d'action - ALIGNÉS À DROITE */}
+          <View style={styles.buttonsContainer}>
+            {buttons.map((button, index) => {
+              const isCancel = button.style === 'cancel';
+              const isDestructive = button.style === 'destructive';
+              
+              // Déterminer le style du bouton
+              let buttonStyle = {};
+              let textColor = config.color;
 
-                if (isCancel) {
-                  buttonStyle = styles.buttonCancel;
-                  textStyle = styles.buttonTextCancel;
-                  textColor = '#6B7280';
-                } else if (isDestructive) {
-                  buttonStyle = styles.buttonDestructive;
-                  textStyle = styles.buttonTextDestructive;
-                  textColor = '#F44336';
-                }
+              if (isCancel) {
+                buttonStyle = styles.buttonCancel;
+                textColor = '#6B7280';
+              } else if (isDestructive) {
+                buttonStyle = styles.buttonDestructive;
+                textColor = '#EF4444';
+              } else {
+                buttonStyle = styles.buttonDefault;
+              }
 
-                return (
-                  <TouchableOpacity
-                    key={index}
+              return (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.button,
+                    buttonStyle,
+                    index > 0 && { marginLeft: 10 }, // Espace entre boutons
+                  ]}
+                  onPress={() => handleButtonPress(button.onPress)}
+                  activeOpacity={0.7}
+                >
+                  <Text
                     style={[
-                      styles.button,
-                      buttonStyle,
-                      index > 0 && styles.buttonSpacing,
+                      styles.buttonText,
+                      { color: button.textColor || textColor },
                     ]}
-                    onPress={() => handleButtonPress(button.onPress)}
                   >
-                    <Text
-                      style={[
-                        textStyle,
-                        { color: button.textColor || textColor },
-                      ]}
-                    >
-                      {button.text}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </Animated.View>
-        </View>
+                    {button.text}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -212,6 +222,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    padding: 20,
   },
   backdrop: {
     position: 'absolute',
@@ -219,94 +230,87 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  backdropTouchable: {
-    flex: 1,
-    width: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
   alertContainer: {
     width: Platform.OS === 'web' ? '30%' : '85%',
-    maxWidth: 400,
+    maxWidth: 450,
     minWidth: Platform.OS === 'web' ? 350 : 280,
-    zIndex: 1000,
-  },
-  alertBox: {
-    borderRadius: 16,
-    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 8,
+      height: 10,
     },
     shadowOpacity: 0.25,
-    shadowRadius: 24,
-    elevation: 10,
+    shadowRadius: 20,
+    elevation: 15,
   },
-  header: {
-    flexDirection: 'row',
+  iconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
-    paddingBottom: 15,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  icon: {
-    marginRight: 12,
+  content: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 24,
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '700',
     color: '#1F2937',
-    flex: 1,
-  },
-  body: {
-    padding: 20,
-    paddingTop: 15,
-    paddingBottom: 20,
+    textAlign: 'center',
+    marginBottom: 12,
+    lineHeight: 28,
   },
   message: {
     fontSize: 16,
-    lineHeight: 22,
-    color: '#4B5563',
-    textAlign: 'left',
+    lineHeight: 24,
+    color: '#6B7280',
+    textAlign: 'center',
   },
   buttonsContainer: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    padding: 16,
-    paddingTop: 0,
+    justifyContent: 'flex-end', // BOUTONS À DROITE
+    width: '100%',
   },
   button: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-    minWidth: 80,
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    borderRadius: 10,
+    minWidth: 90,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#3B82F6',
   },
   buttonDefault: {
-    backgroundColor: 'transparent',
+    backgroundColor: '#F3F4F6',
   },
   buttonCancel: {
     backgroundColor: 'transparent',
+    borderColor: '#E5E7EB',
   },
   buttonDestructive: {
-    backgroundColor: 'transparent',
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FEE2E2',
   },
-  buttonSpacing: {
-    marginLeft: 12,
-  },
-  buttonTextDefault: {
-    fontSize: 16,
+  buttonText: {
+    fontSize: 15,
     fontWeight: '600',
-  },
-  buttonTextCancel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#6B7280',
-  },
-  buttonTextDestructive: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#F44336',
+    letterSpacing: 0.3,
   },
 });
 

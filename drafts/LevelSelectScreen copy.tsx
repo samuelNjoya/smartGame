@@ -1,14 +1,7 @@
 // src/screens/LevelSelectScreen.tsx
 
-import React, { useState, useEffect, useRef } from 'react'; // AJOUT: useRef
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TouchableOpacity, 
-  Animated 
-} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Animated } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { GameStackParamList } from '../../navigation/types';
 import { useSettings } from '../../hooks/useSettings';
@@ -30,7 +23,6 @@ const LevelItem = ({
   isMultipleOf10,
   theme,
   onPress,
-  isCurrentLevel, // AJOUT: Prop pour identifier le niveau actuel (dernier débloqué)
 }: any) => {
 
   // Style de base du niveau
@@ -54,20 +46,6 @@ const LevelItem = ({
     cardStyle.push(styles.bonusCard, { borderColor: theme.primary, borderWidth: 2 });
   }
 
-  // AJOUT: Style spécial pour le niveau actuel (dernier débloqué)
-  if (isCurrentLevel) {
-    cardStyle.push({
-      borderWidth: 3,
-      borderColor: '#4CAF50', // Vert vif pour bien le distinguer
-      shadowColor: '#4CAF50',
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.8,
-      shadowRadius: 8,
-      elevation: 8,
-      transform: [{ scale: 1.05 }], // Légèrement plus grand que les autres
-    });
-  }
-
   return (
     <TouchableOpacity
       style={cardStyle}
@@ -85,18 +63,6 @@ const LevelItem = ({
           color={isMultipleOf10 ? '#FFD700' : theme.primary}
           style={styles.bonusIcon}
         />
-      )}
-      
-      {/* AJOUT: Indicateur visuel pour le niveau actuel */}
-      {isCurrentLevel && (
-        <View style={styles.currentLevelIndicator}>
-          <MaterialCommunityIcons 
-            name="cursor-pointer" 
-            size={16} 
-            color="#4CAF50" 
-          />
-          <Text style={styles.currentLevelText}>DÉBLOQUÉ</Text>
-        </View>
       )}
     </TouchableOpacity>
   );
@@ -147,9 +113,11 @@ const ProgressBar = ({ progress, theme }: { progress: number, theme: any }) => {
 // --- Composant Indicateur de Vies ---
 const LivesIndicator = ({ lives, maxLives = 5, theme }: { lives: number, maxLives?: number, theme: any }) => {
 
+  // AJOUT : Accès à regenJobs pour le timer
   const { regenJobs } = usePlayer();
-  const [timeLeft, setTimeLeft] = useState('00:00');
+  const [timeLeft, setTimeLeft] = useState('00:00');  // AJOUT : State timer
 
+  // AJOUT : formatTime (réutilisé du modal/HomeScreen)
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
     const minutes = Math.floor(totalSeconds / 60);
@@ -157,6 +125,7 @@ const LivesIndicator = ({ lives, maxLives = 5, theme }: { lives: number, maxLive
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  // AJOUT : useEffect pour le timer live
   useEffect(() => {
     if (regenJobs.length > 0) {
       const firstJob = regenJobs[0];
@@ -164,19 +133,21 @@ const LivesIndicator = ({ lives, maxLives = 5, theme }: { lives: number, maxLive
         const remaining = firstJob.endTime - Date.now();
         if (remaining <= 0) {
           setTimeLeft('00:00');
+          // Optionnel : Trigger recharge via usePlayer si besoin
         } else {
           setTimeLeft(formatTime(remaining));
         }
       };
 
-      updateTimer();
+      updateTimer();  // Update immédiat
       const interval = setInterval(updateTimer, 1000);
-      return () => clearInterval(interval);
+      return () => clearInterval(interval);  // Cleanup pro !
     } else {
-      setTimeLeft('00:00');
+      setTimeLeft('00:00');  // Reset si pas de job
     }
-  }, [regenJobs]);
+  }, [regenJobs]);  // Dépendance : Re-run si jobs changent
 
+  // AJOUT : Condition pour afficher le timer
   const showTimer = timeLeft !== '00:00';
 
   return (
@@ -199,6 +170,7 @@ const LivesIndicator = ({ lives, maxLives = 5, theme }: { lives: number, maxLive
         {lives}/{maxLives}
       </Text>
 
+      {/* AJOUT : Timer sous les cœurs */}
       {showTimer && (
         <Text style={[styles.timerText, { color: theme.primary }]}>
           Prochaine vie : {timeLeft}
@@ -254,10 +226,7 @@ const LevelSelectScreen = ({ route, navigation }: Props) => {
   const [lastCompletedLevel, setLastCompletedLevel] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
 
-  // AJOUT: Référence pour le FlatList pour contrôler le scroll
-  const flatListRef = useRef<FlatList>(null);
-  const [shouldScroll, setShouldScroll] = useState(false); // Flag pour déclencher le scroll
-
+  // États pour gérer les CustomAlert
   const [lockedAlertVisible, setLockedAlertVisible] = useState(false);
   const [startAlertVisible, setStartAlertVisible] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
@@ -268,72 +237,53 @@ const LevelSelectScreen = ({ route, navigation }: Props) => {
   // Calcul de la progression globale en pourcentage
   const progressPercentage = (lastCompletedLevel / maxLevels) * 100;
 
-  // 1. Charger la progression au montage
+  // Charger la progression au montage
   useEffect(() => {
     const loadProgress = async () => {
       const completed = await ProgressionService.getLastCompletedLevel(gameId as any, difficulty);
       setLastCompletedLevel(completed);
-      
-      // AJOUT: Active le scroll automatique une fois la progression chargée
-      setShouldScroll(true);
     };
     loadProgress();
 
-    // Recharger la progression quand l'écran redevient focus
+    // Ajouter un listener de focus pour recharger la progression si l'utilisateur
+    // revient après avoir terminé un niveau
     const unsubscribe = navigation.addListener('focus', loadProgress);
     return unsubscribe;
 
   }, [gameId, difficulty, navigation]);
 
-  // 2. AJOUT: Effet pour scroller automatiquement vers le dernier niveau débloqué
-  useEffect(() => {
-    if (shouldScroll && flatListRef.current && lastCompletedLevel > 0) {
-      // On attend un peu (300ms) pour s'assurer que la FlatList est bien rendue
-      const timer = setTimeout(() => {
-        // On calcule à quelle ligne se trouve le dernier niveau débloqué
-        // Sachant qu'on a 4 niveaux par ligne (numColumns={4})
-        const itemsPerRow = 4;
-        const targetRow = Math.ceil(lastCompletedLevel / itemsPerRow) - 1; // -1 car index 0-based
-        
-        // On scroll vers cette ligne
-        flatListRef.current?.scrollToIndex({
-          index: Math.max(0, targetRow), // On s'assure d'être au moins à l'index 0
-          animated: true,
-          viewPosition: 0.3, // Positionne la ligne à 30% du haut de l'écran
-        });
-        
-        // On désactive le flag pour éviter de rescroll à chaque render
-        setShouldScroll(false);
-      }, 300);
 
-      return () => clearTimeout(timer);
-    }
-  }, [shouldScroll, lastCompletedLevel]);
+
 
   const handleLevelPress = (level: number, isUnlocked: boolean) => {
     if (!isUnlocked) {
+      // Affiche l'alerte de niveau verrouillé
       setLockedAlertVisible(true);
       return;
     }
 
+    // Vérification des vies
     if (lives <= 0) {
       setModalVisible(true);
       return;
     }
 
+    // Sauvegarde le niveau sélectionné et affiche l'alerte de confirmation
     setSelectedLevel(level);
     setStartAlertVisible(true);
   };
 
   const handleStartGame = () => {
     if (selectedLevel) {
-      spendLife();
+      spendLife(); // Dépense la vie avant de naviguer
+      // Navigue vers l'écran de jeu correspondant
       // @ts-ignore
       navigation.navigate(gameId, { difficulty, level: selectedLevel });
     }
   };
 
-  type AlertButton = { text: string; onPress: () => void; style?: string; textColor?: string };
+  // Configuration des boutons pour l'alerte de confirmation
+   type AlertButton = { text: string; onPress: () => void; style?: string; textColor?: string };  //type alert button
   const startGameButtons: AlertButton[] = [
     {
       text: "Annuler",
@@ -349,10 +299,9 @@ const LevelSelectScreen = ({ route, navigation }: Props) => {
 
   const renderLevel = ({ item: level }: { item: number }) => {
     const isCompleted = level <= lastCompletedLevel;
+    // Le niveau est déverrouillé s'il est le niveau suivant le dernier complété (lastCompletedLevel + 1)
+    // OU s'il a déjà été complété (rejouabilité)
     const isUnlocked = level <= lastCompletedLevel + 1;
-    
-    // AJOUT: Identifie le niveau actuel (dernier débloqué)
-    const isCurrentLevel = level === lastCompletedLevel + 1;
 
     return (
       <LevelItem
@@ -363,7 +312,6 @@ const LevelSelectScreen = ({ route, navigation }: Props) => {
         isMultipleOf10={level % 10 === 0}
         theme={theme}
         onPress={handleLevelPress}
-        isCurrentLevel={isCurrentLevel} // AJOUT: On passe cette info
       />
     );
   };
@@ -399,25 +347,13 @@ const LevelSelectScreen = ({ route, navigation }: Props) => {
       <Text style={[styles.info, { color: theme.secondary }]}>
         Déverrouillé jusqu'au niveau {lastCompletedLevel + 1} / {maxLevels}
       </Text>
-      
-      {/* AJOUT: FlatList avec référence pour contrôle du scroll */}
+      {/* Grille des niveaux */}
       <FlatList
-        ref={flatListRef} // On attache la référence ici
         data={levelsArray}
         keyExtractor={(item) => item.toString()}
         renderItem={renderLevel}
-        numColumns={4}
+        numColumns={4} // 4 niveaux par ligne
         contentContainerStyle={styles.listContainer}
-        // AJOUT: Gestion d'erreur si le scroll échoue
-        onScrollToIndexFailed={(info) => {
-          // Fallback: on attend un peu et on réessaye
-          setTimeout(() => {
-            flatListRef.current?.scrollToIndex({
-              index: Math.min(info.index, levelsArray.length - 1),
-              animated: true,
-            });
-          }, 100);
-        }}
       />
 
       {/* Légende explicative des bonus */}
@@ -429,7 +365,7 @@ const LevelSelectScreen = ({ route, navigation }: Props) => {
         onClose={() => setModalVisible(false)}
       />
 
-      {/* Alerte pour niveau verrouillé */}
+      {/* 🔥 NOUVEAU : Alerte pour niveau verrouillé */}
       <CustomAlert
         visible={lockedAlertVisible}
         title="Niveau Verrouillé 🔒"
@@ -445,7 +381,7 @@ const LevelSelectScreen = ({ route, navigation }: Props) => {
         onClose={() => setLockedAlertVisible(false)}
       />
 
-      {/* Alerte de confirmation de lancement */}
+      {/* 🔥 NOUVEAU : Alerte de confirmation de lancement */}
       <CustomAlert
         visible={startAlertVisible}
         title="Lancement du Niveau 🚀"
@@ -519,22 +455,6 @@ const styles = StyleSheet.create({
     top: 2,
     right: 2,
   },
-  // AJOUT: Style pour l'indicateur du niveau actuel
-  currentLevelIndicator: {
-    position: 'absolute',
-    bottom: 2,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 2,
-  },
-  currentLevelText: {
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: '#4CAF50',
-  },
   // Styles pour la barre de progression
   progressContainer: {
     marginBottom: 15,
@@ -583,6 +503,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
   },
+    // AJOUT : Style pour le timer (discret, aligné à droite)
   timerText: {
     fontSize: 10,
     fontWeight: '500',

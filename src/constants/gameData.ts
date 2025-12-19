@@ -1,10 +1,10 @@
 // src/constants/gameData.ts
 
 export const MAX_LEVELS = {
-  easy: 200,
-  medium: 150,
-  hard: 100,
-  master: 75,
+  easy: 250,
+  medium: 200,
+  hard: 150,
+  master: 100,
 };
 
 export const GAMES = [

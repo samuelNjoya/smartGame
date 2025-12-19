@@ -109,18 +109,9 @@ const NoLivesModal = ({ visible, onClose }: Props) => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
-
-    // Arrêter visuellement le timer immédiatement
-    setTimeLeft('00:00');
     
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // recharger les vie 
     rechargeLivesWithXP();
-
-      // Fermer après un court délai pour feedback visuel
-  setTimeout(() => {
-    onClose();
-  }, 2000);
   };
 
   if (!visible) return null;
@@ -183,7 +174,7 @@ const NoLivesModal = ({ visible, onClose }: Props) => {
             <View style={styles.heartContainer}>
               <MaterialCommunityIcons 
                 name="heart-off" 
-                size={60} 
+                size={80} 
                 color={theme.error} 
                 style={styles.mainHeart}
               />
@@ -266,6 +257,9 @@ const NoLivesModal = ({ visible, onClose }: Props) => {
                     <Text style={[styles.optionTitle, { color: theme.text }]}>
                       Recharge complète
                     </Text>
+                    <Text style={[styles.optionSubtitle, { color: theme.text }]}>
+                      {remainingLives} vie{remainingLives > 1 ? 's' : ''} restante{remainingLives > 1 ? 's' : ''}
+                    </Text>
                   </View>
                   
                   <View style={styles.optionPrice}>
@@ -284,6 +278,38 @@ const NoLivesModal = ({ visible, onClose }: Props) => {
                     Vous avez {xp} XP (il en faut 450)
                   </Text>
                 )}
+              </TouchableOpacity>
+
+              {/* Option 2: Attendre (gratuit) */}
+              <TouchableOpacity
+                style={[
+                  styles.waitOption,
+                  { 
+                    backgroundColor: theme.primary + '10',
+                    borderColor: theme.primary,
+                  }
+                ]}
+                onPress={onClose}
+                activeOpacity={0.7}
+              >
+                <View style={styles.optionContent}>
+                  <View style={styles.optionIcon}>
+                    <MaterialCommunityIcons 
+                      name="clock" 
+                      size={24} 
+                      color={theme.primary} 
+                    />
+                  </View>
+                  
+                  <View style={styles.optionTexts}>
+                    <Text style={[styles.optionTitle, { color: theme.text }]}>
+                      Attendre gratuitement
+                    </Text>
+                    <Text style={[styles.optionSubtitle, { color: theme.text }]}>
+                      Vos vies se rechargent automatiquement
+                    </Text>
+                  </View>
+                </View>
               </TouchableOpacity>
             </View>
 
@@ -334,13 +360,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     alignItems: 'center',
   },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 15,
+    marginBottom: 10,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 1,
+  },
+  subTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
   content: {
     padding: 25,
     alignItems: 'center',
   },
   heartContainer: {
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 20,
   },
   mainHeart: {
     marginBottom: 5,
@@ -384,7 +429,7 @@ const styles = StyleSheet.create({
     fontSize: 42,
     fontWeight: '900',
     letterSpacing: 2,
-    marginBottom: 10,
+    marginBottom: 15,
   },
   progressBar: {
     width: '100%',
@@ -399,19 +444,24 @@ const styles = StyleSheet.create({
   },
   rechargeSection: {
     width: '100%',
-    marginBottom: 10,
+    marginBottom: 20,
   },
   rechargeTitle: {
     fontSize: 16,
     fontWeight: '700',
-    marginBottom: 10,
+    marginBottom: 15,
     textAlign: 'center',
   },
   rechargeOption: {
     borderRadius: 12,
     borderWidth: 2,
     padding: 15,
-    marginBottom: 10,
+    marginBottom: 12,
+  },
+  waitOption: {
+    borderRadius: 12,
+    borderWidth: 2,
+    padding: 15,
   },
   optionContent: {
     flexDirection: 'row',
@@ -428,6 +478,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 2,
   },
+  optionSubtitle: {
+    fontSize: 12,
+  },
   optionPrice: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -439,7 +492,7 @@ const styles = StyleSheet.create({
   },
   insufficientText: {
     fontSize: 11,
-    marginTop: 6,
+    marginTop: 8,
     fontStyle: 'italic',
     textAlign: 'center',
   },
@@ -447,8 +500,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 25,
     paddingHorizontal: 30,
-    paddingVertical: 10,
-    marginBottom: 6,
+    paddingVertical: 12,
+    marginBottom: 15,
     minWidth: 200,
   },
   closeButtonText: {

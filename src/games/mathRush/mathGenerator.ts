@@ -76,10 +76,84 @@ const generatePerfectSquare = (maxRoot: number = 20) => {
   };
 };
 
-const generateOptions = (answer: number, count: number, difficulty: GameDifficulty): number[] => {
-  const options = new Set<number>([answer]);
+// ⭐⭐⭐ NOUVELLE FONCTION : Détecter le type de réponse ⭐⭐⭐
+const getAnswerType = (answer: number): 'integer' | 'decimal' => {
+  // Vérifie si la réponse est un entier (ex: 8) ou un décimal (ex: 8.5)
+  return answer % 1 === 0 ? 'integer' : 'decimal';
+};
+
+// ⭐⭐⭐ NOUVELLE FONCTION : Générer une mauvaise réponse crédible ⭐⭐⭐
+const generateWrongAnswer = (answer: number, answerType: 'integer' | 'decimal', range: number): number => {
+  let wrongAnswer: number;
   
-  // Plage d'options adaptée à la difficulté
+  if (answerType === 'integer') {
+    // Pour les réponses entières → générer d'autres entières crédibles
+    if (Math.random() < 0.3) {
+      // 30% : erreur de calcul commune (double, moitié, ±10%)
+      if (Math.random() < 0.5) {
+        wrongAnswer = answer * 2; // Double
+      } else {
+        wrongAnswer = Math.round(answer / 2); // Moitié
+      }
+    } else if (Math.random() < 0.5) {
+      // 35% : erreur proche (±1 à ±3)
+      const offset = getRandomInt(-3, 3);
+      wrongAnswer = answer + (offset !== 0 ? offset : 1);
+    } else {
+      // 35% : erreur dans la plage normale
+      wrongAnswer = answer + getRandomInt(-range, range);
+    }
+    
+    // S'assurer que c'est un entier différent de la réponse
+    wrongAnswer = Math.round(wrongAnswer);
+    if (wrongAnswer === answer) {
+      wrongAnswer += (Math.random() > 0.5 ? 1 : -1);
+    }
+  } else {
+    // Pour les réponses décimales → générer d'autres décimales crédibles
+    const decimalPlaces = 2; // Toujours 2 décimales pour la cohérence
+    const multiplier = Math.pow(10, decimalPlaces);
+    
+    if (Math.random() < 0.4) {
+      // 40% : erreur proche (±0.1 à ±0.5)
+      const offset = (getRandomInt(-5, 5)) / 10;
+      wrongAnswer = answer + offset;
+    } else if (Math.random() < 0.3) {
+      // 30% : fraction simple proche (0.25, 0.33, 0.5, 0.66, 0.75)
+      const commonDecimals = [0.25, 0.33, 0.5, 0.66, 0.75, 1.25, 1.33, 1.5, 1.66, 1.75];
+      wrongAnswer = commonDecimals[getRandomInt(0, commonDecimals.length - 1)];
+      // Ajuster pour être dans la plage
+      const base = Math.floor(answer);
+      wrongAnswer = base + wrongAnswer;
+    } else {
+      // 30% : erreur dans la plage normale
+      wrongAnswer = answer + (getRandomInt(-range * 10, range * 10) / 10);
+    }
+    
+    // Arrondir à 2 décimales et s'assurer que c'est différent
+    wrongAnswer = Math.round(wrongAnswer * multiplier) / multiplier;
+    if (Math.abs(wrongAnswer - answer) < 0.05) {
+      wrongAnswer += 0.1;
+    }
+  }
+  
+  return wrongAnswer;
+};
+
+// ⭐⭐⭐ FONCTION generateOptions MODIFIÉE ⭐⭐⭐
+const generateOptions = (answer: number, count: number, difficulty: GameDifficulty, questionType?: string): number[] => {
+  const options = new Set<number>();
+  const answerType = getAnswerType(answer);
+  
+  // Déterminer combien de décimales afficher
+  const decimalPlaces = answerType === 'decimal' ? 2 : 0;
+  const multiplier = Math.pow(10, decimalPlaces);
+  
+  // Formater la réponse correcte
+  const formattedAnswer = Math.round(answer * multiplier) / multiplier;
+  options.add(formattedAnswer);
+  
+  // Plage adaptée à la difficulté et au type de réponse
   let range: number;
   switch(difficulty) {
     case 'easy':
@@ -94,39 +168,33 @@ const generateOptions = (answer: number, count: number, difficulty: GameDifficul
       break;
   }
   
+  // Générer des mauvaises réponses crédibles
   while (options.size < count) {
-    // Générer des options variées
-    let wrongAnswer: number;
+    const wrongAnswer = generateWrongAnswer(answer, answerType, range);
     
-    // 50% de chance d'option proche, 50% de chance d'option éloignée
-    if (Math.random() < 0.5) {
-      // Option proche (±1 à ±range/2)
-      const offset = getRandomInt(-Math.floor(range/2), Math.floor(range/2));
-      wrongAnswer = answer + (offset !== 0 ? offset : 1);
-    } else {
-      // Option plus éloignée
-      wrongAnswer = answer + getRandomInt(-range, range);
+    // Vérifier que l'option n'est pas trop proche des autres
+    let isTooClose = false;
+    for (const opt of options) {
+      if (Math.abs(opt - wrongAnswer) < (answerType === 'integer' ? 1 : 0.1)) {
+        isTooClose = true;
+        break;
+      }
     }
     
-    // Éviter les doublons et les réponses trop proches
-    const isTooClose = options.has(wrongAnswer) || 
-                      options.has(wrongAnswer + 1) || 
-                      options.has(wrongAnswer - 1);
-    
-    // Pour les fractions, autoriser des valeurs proches (ex: 0.25, 0.33, 0.5)
-    if (difficulty === 'master' && answer % 1 !== 0) {
-      if (!isTooClose && Math.abs(wrongAnswer - answer) > 0.05) {
-        options.add(Number(wrongAnswer.toFixed(2)));
-      }
-    } else if (!isTooClose && Math.abs(wrongAnswer - answer) > 0.5) {
-      options.add(wrongAnswer);
+    if (!isTooClose) {
+      // Formater selon le type
+      const formattedWrongAnswer = Math.round(wrongAnswer * multiplier) / multiplier;
+      options.add(formattedWrongAnswer);
     }
     
     // Éviter la boucle infinie
     if (options.size < count && options.size > 1) {
-      // Ajouter une option évidente si nécessaire
-      const obviousWrong = answer + (answer > 0 ? -range : range);
-      options.add(obviousWrong);
+      // Ajouter une option évidente mais crédible
+      const obviousWrong = answerType === 'integer' 
+        ? answer + (answer > 0 ? -range : range)
+        : answer + (answer > 0 ? -range/2 : range/2);
+      const formattedObvious = Math.round(obviousWrong * multiplier) / multiplier;
+      options.add(formattedObvious);
     }
   }
 
@@ -144,6 +212,7 @@ const generateProblem = (difficulty: GameDifficulty, problemId: number): MathPro
   let question: string;
   let numOptions = 4;
   let timeLimit = 15;
+  let questionType: string = 'basic'; // 'basic', 'fraction', 'square', 'root'
   
   // Progression dynamique basée sur l'ID du problème
   const complexityFactor = Math.min(1, problemId / 20); // Sur 20 problèmes max
@@ -152,6 +221,7 @@ const generateProblem = (difficulty: GameDifficulty, problemId: number): MathPro
     case 'easy':
       timeLimit = 15;
       numOptions = 3;
+      questionType = 'basic';
       
       // Additions et soustractions simples
       const maxEasyNum = 20 + Math.floor(complexityFactor * 30); // 20 à 50
@@ -171,6 +241,7 @@ const generateProblem = (difficulty: GameDifficulty, problemId: number): MathPro
 
     case 'medium':
       timeLimit = 12;
+      questionType = 'basic';
       
       // 40% multiplications, 60% additions/soustractions
       if (Math.random() < 0.4) {
@@ -196,6 +267,7 @@ const generateProblem = (difficulty: GameDifficulty, problemId: number): MathPro
 
     case 'hard':
       timeLimit = 10;
+      questionType = 'basic';
       
       // 25% divisions, 75% opérations mixtes
       if (Math.random() < 0.25) {
@@ -219,7 +291,7 @@ const generateProblem = (difficulty: GameDifficulty, problemId: number): MathPro
         answer = calculateExpression([num1, num2, num3], operations);
         
         // Formater la question proprement
-        question = `${num1} ${operations[0]} ${num2} ${operations[1]} ${num3} = ?`;
+        question = `${num1} ${operations[0]} ${2} ${operations[1]} ${num3} = ?`;
       }
       break;
 
@@ -227,29 +299,31 @@ const generateProblem = (difficulty: GameDifficulty, problemId: number): MathPro
       timeLimit = 8;
       
       // Répartition des types de problèmes pour Master :
-      // 20% Carrés, 20% Racines, 20% Fractions, 40% Nombres négatifs/complexes
       const problemType = Math.random();
       
       if (problemType < 0.2) {
         // Carrés simples
+        questionType = 'square';
         num1 = getRandomInt(5, 20);
         answer = num1 * num1;
         question = `${num1}² = ?`;
       } 
       else if (problemType < 0.4) {
         // Racines carrées de carrés parfaits
+        questionType = 'root';
         const { root, square } = generatePerfectSquare(15);
         answer = root;
         question = `√${square} = ?`;
       }
       else if (problemType < 0.6) {
         // Fractions simples
+        questionType = 'fraction';
         const fraction1 = generateSimpleFraction();
         const fraction2 = generateSimpleFraction();
         
         // 50% addition, 50% soustraction de fractions
         if (Math.random() > 0.5) {
-          // Addition de fractions avec même dénominateur
+          // Addition de fractions
           if (fraction1.denominator === fraction2.denominator) {
             answer = fraction1.value + fraction2.value;
             question = `${fraction1.numerator}/${fraction1.denominator} + ${fraction2.numerator}/${fraction2.denominator} = ?`;
@@ -283,6 +357,7 @@ const generateProblem = (difficulty: GameDifficulty, problemId: number): MathPro
       }
       else {
         // Nombres négatifs et opérations complexes
+        questionType = 'complex';
         num1 = getRandomInt(-25, 40);
         num2 = getRandomInt(-20, 30);
         num3 = getRandomInt(-10, 15);
@@ -311,7 +386,7 @@ const generateProblem = (difficulty: GameDifficulty, problemId: number): MathPro
     id: problemId,
     question,
     answer,
-    options: generateOptions(answer, numOptions, difficulty),
+    options: generateOptions(answer, numOptions, difficulty, questionType),
     baseXp: 0, // À définir ailleurs
     timeLimit,
   };
@@ -343,7 +418,7 @@ export const generateMathLevel = (difficulty: GameDifficulty, level: number): Ma
 
 // Fonction utilitaire pour tester (optionnelle)
 export const testMathGenerator = () => {
-  console.log("=== TEST MATH GENERATOR ===");
+  console.log("=== TEST MATH GENERATOR AMÉLIORÉ ===");
   
   const difficulties: GameDifficulty[] = ['easy', 'medium', 'hard', 'master'];
   
@@ -351,10 +426,10 @@ export const testMathGenerator = () => {
     console.log(`\n--- ${difficulty.toUpperCase()} ---`);
     const problems = generateMathLevel(difficulty, 1);
     
-    problems.slice(0, 3).forEach(problem => {
+    problems.slice(0, 4).forEach(problem => {
       console.log(`Q: ${problem.question}`);
-      console.log(`A: ${problem.answer}`);
-      console.log(`Options: ${problem.options.join(', ')}`);
+      console.log(`A: ${problem.answer} (${getAnswerType(problem.answer)})`);
+      console.log(`Options: ${problem.options.map(opt => opt.toFixed(2)).join(', ')}`);
       console.log(`Time: ${problem.timeLimit}s\n`);
     });
   });
